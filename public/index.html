@@ -198,12 +198,7 @@
       <span class="brand-badge small">BQ</span>
       <span class="brand-word">FITNESS</span>
     </div>
-    <div class="topbar-user">
-      <button id="themeToggle" class="icon-btn" aria-label="Ganti tema">
-        <svg id="iconSun" class="ic"><use href="#i-sun"/></svg>
-        <svg id="iconMoon" class="ic" style="display:none"><use href="#i-moon"/></svg>
-      </button>
-    </div>
+    <button class="avatar-btn" id="openProfile" aria-label="Profil dan target"><svg class="ic"><use href="#i-user"/></svg></button>
   </header>
 
   <!-- VIEWS -->
@@ -216,7 +211,6 @@
           <p class="eyebrow-plain" id="greetDate">Selasa, 15 September</p>
           <h1 class="hello-name" id="greetName">Halo, Atlet</h1>
         </div>
-        <button class="avatar-btn" id="openProfile" aria-label="Profil dan target"><svg class="ic"><use href="#i-user"/></svg></button>
       </div>
 
       <div class="ring-card">
@@ -333,7 +327,7 @@
     <section id="view-run" class="view">
       <div class="view-head">
         <div>
-          <h1 id="runTitle">Aktivitas</h1>
+          <h1 id="runTitle">Kardio</h1>
           <p class="view-sub">Lacak lari & sepeda dengan GPS</p>
         </div>
         <div class="seg-toggle" id="runModeToggle">
@@ -366,7 +360,7 @@
       </div>
       <p id="gpsStatus" class="gps-status"></p>
 
-      <h2 class="section-title">Riwayat Aktivitas</h2>
+      <h2 class="section-title">Riwayat Kardio</h2>
       <div id="runHistory" class="history-list"></div>
     </section>
 
@@ -457,7 +451,7 @@
       <span class="nav-icon"><svg class="ic"><use href="#i-gym"/></svg></span><span>Latihan</span>
     </button>
     <button class="nav-btn" data-view="view-run">
-      <span class="nav-icon"><svg class="ic"><use href="#i-activity"/></svg></span><span>Aktivitas</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-activity"/></svg></span><span>Kardio</span>
     </button>
     <button class="nav-btn" data-view="view-food">
       <span class="nav-icon"><svg class="ic"><use href="#i-food"/></svg></span><span>Makan</span>
@@ -475,6 +469,13 @@
     <div class="modal-head">
       <h2>Profil & Target</h2>
       <button id="closeProfile" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="theme-row">
+      <span class="theme-label"><svg class="ic"><use href="#i-sun"/></svg> Mode tampilan</span>
+      <button id="themeToggle" class="icon-btn" aria-label="Ganti tema">
+        <svg id="iconSun" class="ic"><use href="#i-sun"/></svg>
+        <svg id="iconMoon" class="ic" style="display:none"><use href="#i-moon"/></svg>
+      </button>
     </div>
     <label>Nama <input id="profName" class="text-input"></label>
     <div class="row2">
