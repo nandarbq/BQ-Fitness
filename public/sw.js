@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bq-fitness-v3';
+const CACHE_NAME = 'bq-fitness-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -36,6 +36,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Only handle GET requests; let the browser deal with the rest.
+  if (event.request.method !== 'GET') return;
+
   // Never cache API calls — always go to network so data stays fresh and accurate.
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(event.request));
@@ -43,12 +46,16 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin === self.location.origin) {
+    // Network-first: always try fresh so local changes appear immediately,
+    // fall back to cache only when offline.
     event.respondWith(
-      caches.match(event.request).then(cached => cached || fetch(event.request).then(resp => {
+      fetch(event.request).then(resp => {
         const clone = resp.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return resp;
-      }).catch(() => cached))
+      }).catch(() =>
+        caches.match(event.request).then(cached => cached || caches.match('./index.html'))
+      )
     );
   } else {
     event.respondWith(
