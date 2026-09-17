@@ -9,7 +9,7 @@ router.use(requireAuth);
 router.put('/', asyncHandler(async (req, res) => {
   const { name, weight, height, sleepTarget } = req.body || {};
   const { data: user, error } = await supabase
-    .from('users')
+    .from('profiles')
     .update({
       name: String(name || '').trim(),
       weight: Number(weight) || 65,
@@ -23,7 +23,7 @@ router.put('/', asyncHandler(async (req, res) => {
 
   res.json({
     user: {
-      id: user.id, name: user.name, email: user.email,
+      id: user.id, name: user.name,
       weight: user.weight, height: user.height, sleepTarget: user.sleep_target
     }
   });

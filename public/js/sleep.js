@@ -58,14 +58,14 @@ const SLEEP = (() => {
       return;
     }
     box.innerHTML = '';
-    const qEmoji = ['', '😩', '😕', '😐', '🙂', '😴'];
+    const qIcon = ['', ICON('q1'), ICON('q2'), ICON('q3'), ICON('q4'), ICON('q5')];
     cache.slice(0, 30).forEach(s => {
       const el = document.createElement('div');
       el.className = 'history-item';
       el.innerHTML = `
         <div class="h-left">
           <strong>${formatDate(s.date)}</strong>
-          <span>${s.startTime} → ${s.endTime} ${qEmoji[s.quality] || ''}</span>
+          <span>${s.startTime} → ${s.endTime} ${qIcon[s.quality] || ''}</span>
         </div>
         <div class="h-right">${s.hours}<small>jam</small></div>`;
       box.appendChild(el);

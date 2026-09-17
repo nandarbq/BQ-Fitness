@@ -36,7 +36,7 @@ const FOOD = (() => {
       block.innerHTML = `
         <div class="meal-block-head">
           <h3>${m.label}</h3>
-          <button data-meal="${m.key}" class="add-food-btn">+</button>
+          <button data-meal="${m.key}" class="add-food-btn">${ICON('plus')}</button>
         </div>
         <div class="meal-items" id="meal-${m.key}"></div>`;
       wrap.appendChild(block);
@@ -129,7 +129,7 @@ const FOOD = (() => {
         row.className = 'food-item';
         row.innerHTML = `
           <div><div class="f-name">${escapeHtml(it.name)}</div><div class="f-macro">${it.kcal} kkal · P${it.protein} K${it.carb} L${it.fat}</div></div>
-          <button class="f-del" data-id="${it.id}">✕</button>`;
+          <button class="f-del" data-id="${it.id}">${ICON('close')}</button>`;
         row.querySelector('.f-del').addEventListener('click', () => deleteEntry(it.id));
         box.appendChild(row);
       });

@@ -1,25 +1,45 @@
 /* API client for BQ Fitness backend */
 const API = (() => {
   const BASE = '/api';
-  let token = localStorage.getItem('bq_token') || null;
+  let session = JSON.parse(localStorage.getItem('bq_session') || 'null');
   let currentUser = JSON.parse(localStorage.getItem('bq_user') || 'null');
 
-  function setSession(t, user) {
-    token = t; currentUser = user;
-    localStorage.setItem('bq_token', t);
-    localStorage.setItem('bq_user', JSON.stringify(user));
+  function setSession(s, user) {
+    session = s;
+    if (user !== undefined) currentUser = user;
+    if (s) localStorage.setItem('bq_session', JSON.stringify(s));
+    else localStorage.removeItem('bq_session');
+    if (currentUser) localStorage.setItem('bq_user', JSON.stringify(currentUser));
   }
   function clearSession() {
-    token = null; currentUser = null;
-    localStorage.removeItem('bq_token');
+    session = null; currentUser = null;
+    localStorage.removeItem('bq_session');
     localStorage.removeItem('bq_user');
   }
-  function isAuthed() { return !!token; }
+  function isAuthed() { return !!session && !!session.access_token; }
   function getUser() { return currentUser; }
+
+  async function refreshSession() {
+    if (!session || !session.refresh_token) return false;
+    let data = {};
+    try {
+      const res = await fetch(BASE + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: session.refresh_token })
+      });
+      data = await res.json();
+      if (!res.ok || !data.session) return false;
+    } catch (e) {
+      return false;
+    }
+    setSession(data.session, data.user || currentUser);
+    return true;
+  }
 
   async function request(method, path, body) {
     const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = 'Bearer ' + token;
+    if (session && session.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
     const res = await fetch(BASE + path, {
       method,
       headers,
@@ -27,8 +47,14 @@ const API = (() => {
     });
     let data = {};
     try { data = await res.json(); } catch (e) { /* no body */ }
+
+    if (res.status === 401 && !path.startsWith('/auth/refresh') && session && session.refresh_token) {
+      // access token kedaluwarsa: coba refresh sekali lalu ulangi permintaan
+      if (await refreshSession()) return request(method, path, body);
+      clearSession();
+      throw new Error('Sesi berakhir. Silakan login kembali.');
+    }
     if (!res.ok) {
-      if (res.status === 401) clearSession();
       throw new Error(data.error || 'Terjadi kesalahan jaringan.');
     }
     return data;
@@ -37,12 +63,12 @@ const API = (() => {
   // ---- auth ----
   async function register(name, email, password) {
     const data = await request('POST', '/auth/register', { name, email, password });
-    setSession(data.token, data.user);
+    setSession(data.session, data.user);
     return data.user;
   }
   async function login(email, password) {
     const data = await request('POST', '/auth/login', { email, password });
-    setSession(data.token, data.user);
+    setSession(data.session, data.user);
     return data.user;
   }
   async function fetchMe() {
@@ -51,7 +77,26 @@ const API = (() => {
     localStorage.setItem('bq_user', JSON.stringify(data.user));
     return data.user;
   }
-  function logout() { clearSession(); }
+  async function logout() {
+    const snapshot = session;
+    clearSession();
+    if (snapshot && snapshot.refresh_token) {
+      try {
+        await fetch(BASE + '/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + snapshot.access_token
+          },
+          body: JSON.stringify({ refresh_token: snapshot.refresh_token })
+        });
+      } catch (e) { /* offline: sesi lokal sudah dibersihkan */ }
+    }
+  }
+  async function resetPassword(email) { return request('POST', '/auth/reset-password', { email }); }
+  async function updatePassword(accessToken, password) {
+    return request('POST', '/auth/update-password', { access_token: accessToken, password });
+  }
 
   // ---- profile ----
   async function saveProfile(profile) {
@@ -84,7 +129,7 @@ const API = (() => {
   // ---- sleep ----
   async function getSleepLogs() { return (await request('GET', '/sleep')).logs; }
   async function addSleepLog(s) { return (await request('POST', '/sleep', s)).log; }
-  async function deleteSleepLog(id) { return request('DELETE', '/sleep/' + id); }
+  async function deleteSleepLog(id) { return (await request('DELETE', '/sleep/' + id)); }
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function todayISO() {
@@ -95,6 +140,7 @@ const API = (() => {
 
   return {
     isAuthed, getUser, register, login, fetchMe, logout, saveProfile,
+    resetPassword, updatePassword,
     getWorkouts, addWorkout, deleteWorkout,
     getActivities, addActivity, deleteActivity,
     getFoodLogs, addFoodLog, deleteFoodLog, getFoodGoal, saveFoodGoal,

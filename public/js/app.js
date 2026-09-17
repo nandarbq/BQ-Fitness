@@ -39,8 +39,8 @@ async function bootstrapApp() {
   await Promise.all([WORKOUT.init(), RUNNING.init(), FOOD.init(), SLEEP.init()]);
   DASHBOARD.init();
 
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    API.logout();
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await API.logout();
     location.reload();
   });
 }

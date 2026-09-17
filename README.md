@@ -6,7 +6,7 @@ Aplikasi pelacak **latihan, lari/sepeda (ala Strava), makan, dan tidur** — ver
 
 - **Backend:** Node.js + Express
 - **Database:** Supabase (PostgreSQL) lewat `@supabase/supabase-js` — gratis, terkelola, bisa diakses dari mana pun
-- **Autentikasi:** JWT + password hash (bcrypt), data pengguna & kata sandi tetap disimpan di app ini (tidak pakai Supabase Auth)
+- **Autentikasi:** **Supabase Auth** (email + password, JWT access/refresh token otomatis dikelola), profil pengguna disimpan di tabel `public.profiles`
 - **Frontend:** HTML/CSS/JS vanilla (PWA), peta GPS pakai Leaflet + OpenStreetMap
 - **Tema:** Putih-Merah (terang) & Hitam-Merah (gelap)
 
@@ -18,13 +18,13 @@ bq-fitness/
 ├── package.json
 ├── .env.example            # contoh file environment variable
 ├── db/
-│   ├── schema.sql          # skema tabel untuk dijalankan di SQL Editor Supabase
-│   └── database.js         # koneksi ke Supabase (client @supabase/supabase-js)
+│   ├── schema.sql            # skema tabel BQ Fitness (reset + buat ulang, versi Supabase Auth)
+│   └── database.js           # koneksi ke Supabase (client @supabase/supabase-js)
 ├── middleware/
-│   ├── auth.js             # verifikasi JWT
-│   └── asyncHandler.js     # pembungkus handler async agar error sampai ke Express
+│   ├── auth.js               # verifikasi token lewat Supabase Auth
+│   └── asyncHandler.js       # pembungkus handler async agar error sampai ke Express
 ├── routes/
-│   ├── auth.js              # register, login, /me
+│   ├── auth.js              # register, login, refresh, logout, reset/update password, /me
 │   ├── profile.js
 │   ├── workouts.js
 │   ├── activities.js        # lari & sepeda dengan titik GPS
@@ -32,13 +32,15 @@ bq-fitness/
 │   └── sleep.js
 └── public/                  # frontend (disajikan langsung oleh Express)
     ├── index.html
+    ├── reset-password.html  # halaman atur ulang kata sandi (dibuka dari email)
     ├── manifest.json
     ├── sw.js
     ├── css/style.css
     ├── icons/
     └── js/
-        ├── api.js            # client API (pengganti localStorage)
-        ├── auth-ui.js         # layar login/daftar
+        ├── api.js            # client API (session access/refresh token dengan auto-refresh)
+        ├── auth-ui.js        # layar login/daftar + lupa kata sandi
+        ├── reset-password.js # logika halaman atur ulang kata sandi
         ├── theme.js, nav.js
         ├── dashboard.js, workout.js, running.js, food.js, sleep.js
         └── app.js
@@ -47,13 +49,17 @@ bq-fitness/
 ## Setup Supabase (sekali saja)
 
 1. Buat akun di [supabase.com](https://supabase.com), lalu **New project** (pilih region terdekat).
-2. Buka menu **SQL Editor** → **New query**, paste isi file `db/schema.sql`, lalu **Run**. Ini membuat semua tabel & index.
+2. Buka menu **SQL Editor** → **New query**, paste isi file `db/schema.sql`, lalu **Run**. File ini **menghapus tabel data lama lalu membuat ulang dari nol** (reset penuh), jadi pastikan tidak ada data penting yang bakal hilang.
 3. Buka **Project Settings → API**. Salin **Project URL** dan **service_role key** (rahasia, jangan pernah taruh di frontend).
-4. Buat file `.env` dari `.env.example`:
+4. Buka **Authentication → Providers**: pastikan provider **Email** aktif (default untuk project baru: aktif).
+5. Buka **Authentication → URL Configuration → Redirect URLs**: tambahkan `APP_URL` kamu (mis. `http://localhost:3000` dan URL production). Tanpa ini link reset password tidak akan mengarah ke aplikasi.
+6. Buat file `.env` dari `.env.example`:
    ```bash
    cp .env.example .env
    ```
-   Lalu isi `JWT_SECRET`, `SUPABASE_URL`, dan `SUPABASE_SERVICE_ROLE_KEY`.
+   Lalu isi `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `APP_URL`.
+
+> Catatan email: Supabase bisa langsung mengirim email (verifikasi/reset) memakai mailer bawaan. Untuk volume besar sebaiknya pasang **custom SMTP** di Authentication → SMTP, dan sesuaikan *templates email* (Confirm signup / Reset password) agar link mengarah ke `APP_URL`.
 
 ## Cara Menjalankan (lokal)
 
@@ -72,7 +78,7 @@ npm install
 npm start
 ```
 
-Buka `http://localhost:3000` di browser. Tabel & data tersimpan otomatis di Supabase.
+Buka `http://localhost:3000` di browser. Akun & data tersimpan otomatis di Supabase.
 
 Untuk pengembangan dengan auto-restart saat file berubah:
 ```bash
@@ -94,13 +100,18 @@ Karena database kini di Supabase (bukan file lokal), kamu bebas memakai hosting 
 - **Fly.io**, **Vercel**, atau **VPS** (mis. DigitalOcean/Biznet) + Nginx reverse proxy
 
 Yang perlu diperhatikan saat deploy:
-- Set environment variable di hosting: `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (nilai kuat yang rahasia, jangan pakai contoh)
+- Set environment variable di hosting: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL` (nilai kuat yang rahasia, jangan pakai contoh)
 - Wajib HTTPS supaya GPS tracking dan instalasi PWA berjalan penuh di semua browser
+- Tambahkan URL production ke **Authentication → URL Configuration → Redirect URLs** di Supabase (untuk link reset password)
 - Service role key Supabase **hanya dipakai di server**, jangan pernah dibuka di frontend
+
+## Reset database (kalau ada tabel versi lama)
+
+Skrip `db/schema.sql` dipakai untuk instal baru sekaligus reset: di bagian atasnya dia menghapus tabel lama (termasuk `public.users` versi lama) lalu membuat ulang dari nol. Cukup jalankan ulang sekali di SQL Editor — data lama ikut terhapus, lalu tinggal daftar akun baru.
 
 ## Fitur
 
-- **Autentikasi akun** — daftar & masuk, data tersimpan di server per-pengguna (bisa dipakai dari HP mana pun, tidak hilang saat ganti device/browser)
+- **Autentikasi akun (Supabase Auth)** — daftar & masuk, data tersimpan di server per-pengguna (bisa dipakai dari HP mana pun, tidak hilang saat ganti device/browser). Ada **lupa kata sandi** via email, sesi access/refresh token yang di-refresh otomatis, dan logout yang mencabut sesi server
 - **Dashboard** — ring kalori, ringkasan tidur/latihan/jarak, streak harian, insight otomatis (korelasi tidur vs hari aktif)
 - **Latihan** — sesi latihan dengan timer & daftar gerakan, riwayat tersimpan
 - **Lari/Sepeda (ala Strava)** — pelacakan GPS langsung di peta, jarak/waktu/pace/kalori, riwayat rute
@@ -114,7 +125,8 @@ Karena ini PWA (bukan aplikasi native), pelacakan GPS paling stabil kalau layar 
 
 ## Keamanan
 
-- Password di-hash dengan bcrypt, tidak pernah disimpan dalam bentuk teks biasa
-- Setiap endpoint data (workout, aktivitas, makan, tidur) diverifikasi lewat token JWT dan hanya mengembalikan data milik pengguna yang sedang login
+- Autentikasi ditangani **Supabase Auth**: password di-hash dengan algoritma aman (scrypt/bcrypt), tidak pernah disimpan dalam teks biasa, ada rate limiting percobaan login, dan access token berumur pendek + refresh token dapat dicabut saat logout
+- Setiap endpoint data (workout, aktivitas, makan, tidur) diverifikasi token lewat `supabase.auth.getUser()` dan hanya mengembalikan data milik pengguna yang sedang login (`user_id` diambil dari token di backend)
 - Query ke Supabase selalu difilter dengan `user_id` dari token di backend
-- Ganti `JWT_SECRET` di file `.env` sebelum dipakai serius — jangan gunakan nilai contoh
+- Tabel public mengaktifkan **Row Level Security** (tiap user cuma bisa akses datanya sendiri); backend tetap memakai service_role key yang dianggap sah melewati RLS
+- Jaga `SUPABASE_SERVICE_ROLE_KEY` dan `APP_URL` tetap rahasia; jangan pernah menaruh service role key di frontend

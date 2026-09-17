@@ -19,14 +19,143 @@
 </head>
 <body>
 
+<!-- SVG ICON SPRITE -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24">
+    <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-gym" viewBox="0 0 24 24">
+    <path d="M14.4 14.4 9.6 9.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m21.5 21.5-1.4-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M3.9 3.9 2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-footprints" viewBox="0 0 24 24">
+    <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24">
+    <circle cx="5.5" cy="17.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="18.5" cy="17.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-3 11.5V14l-3-3 4-3 2 3h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-food" viewBox="0 0 24 24">
+    <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M7 2v20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-bed" viewBox="0 0 24 24">
+    <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 4v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M2 18h20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M12 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M12 20v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m4.93 4.93 1.41 1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m17.66 17.66 1.41 1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M2 12h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 12h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m6.34 17.66-1.41 1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m19.07 4.93-1.41 1.41" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-user" viewBox="0 0 24 24">
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24">
+    <path d="M12 5v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-close" viewBox="0 0 24 24">
+    <path d="M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="m6 6 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24">
+    <path d="M7 4.5 19 12 7 19.5Z" fill="currentColor" stroke="none" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24">
+    <rect x="7" y="5" width="3.4" height="14" rx="1.7" fill="currentColor" stroke="none"/>
+    <rect x="13.6" y="5" width="3.4" height="14" rx="1.7" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+    <polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24">
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="16 7 22 7 22 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24">
+    <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="21" y1="12" x2="9" y2="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24">
+    <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-q1" viewBox="0 0 24 24">
+    <rect x="10.5" y="12" width="3" height="8" rx="1.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-q2" viewBox="0 0 24 24">
+    <rect x="6.75" y="10" width="3" height="10" rx="1.5" fill="currentColor"/>
+    <rect x="14.25" y="6.5" width="3" height="13.5" rx="1.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-q3" viewBox="0 0 24 24">
+    <rect x="5.25" y="12" width="3" height="8" rx="1.5" fill="currentColor"/>
+    <rect x="10.5" y="8" width="3" height="12" rx="1.5" fill="currentColor"/>
+    <rect x="15.75" y="4" width="3" height="16" rx="1.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-q4" viewBox="0 0 24 24">
+    <rect x="3.75" y="14" width="3" height="6" rx="1.5" fill="currentColor"/>
+    <rect x="8.25" y="10" width="3" height="10" rx="1.5" fill="currentColor"/>
+    <rect x="12.75" y="6" width="3" height="14" rx="1.5" fill="currentColor"/>
+    <rect x="17.25" y="2" width="3" height="18" rx="1.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-q5" viewBox="0 0 24 24">
+    <rect x="2.25" y="16" width="3" height="4" rx="1.5" fill="currentColor"/>
+    <rect x="6.75" y="12" width="3" height="8" rx="1.5" fill="currentColor"/>
+    <rect x="11.25" y="8" width="3" height="12" rx="1.5" fill="currentColor"/>
+    <rect x="15.75" y="4" width="3" height="16" rx="1.5" fill="currentColor"/>
+    <rect x="20.25" y="0" width="3" height="20" rx="1.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
 <!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">
-      <span class="brand-mark">BQ</span>
-      <span class="brand-word">FITNESS</span>
+      <span class="brand-badge">BQ</span>
+      <div class="auth-brand-text">
+        <span class="brand-word">FITNESS</span>
+        <span class="brand-sub">Temani perjalananmu</span>
+      </div>
     </div>
-    <p class="auth-tagline">Latihan, lari/sepeda, makan, dan tidur dalam satu tempat.</p>
+    <p class="auth-tagline">Lari, latihan, makan, dan tidur — semua tercatat mudah di satu tempat.</p>
     <div class="auth-card">
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">Masuk</button>
@@ -39,7 +168,15 @@
         <label>Email <input type="email" id="loginEmail" class="text-input" required autocomplete="email"></label>
         <label>Kata sandi <input type="password" id="loginPassword" class="text-input" required autocomplete="current-password"></label>
         <button type="submit" class="cta-btn">Masuk</button>
+        <p class="auth-switch"><a id="resetPwLink">Lupa kata sandi?</a></p>
       </form>
+
+      <div id="resetPwBox" class="auth-form" style="display:none">
+        <p class="auth-error" id="resetPwMsg"></p>
+        <label>Email <input type="email" id="resetPwEmail" class="text-input" autocomplete="email"></label>
+        <button type="button" id="resetPwBtn" class="cta-btn">Kirim Link Reset</button>
+        <p class="auth-switch"><a id="resetPwBack">Kembali ke Masuk</a></p>
+      </div>
 
       <form id="registerForm" class="auth-form">
         <label>Nama <input type="text" id="regName" class="text-input" required autocomplete="name"></label>
@@ -58,14 +195,13 @@
   <!-- TOP BAR -->
   <header class="topbar">
     <div class="topbar-brand">
-      <span class="brand-mark">BQ</span>
+      <span class="brand-badge small">BQ</span>
       <span class="brand-word">FITNESS</span>
     </div>
     <div class="topbar-user">
-      <button class="logout-btn" id="logoutBtn">Keluar</button>
       <button id="themeToggle" class="icon-btn" aria-label="Ganti tema">
-        <svg id="iconSun" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.2" y1="4.2" x2="6" y2="6"/><line x1="18" y1="18" x2="19.8" y2="19.8"/><line x1="19.8" y1="4.2" x2="18" y2="6"/><line x1="6" y1="18" x2="4.2" y2="19.8"/></g></svg>
-        <svg id="iconMoon" viewBox="0 0 24 24" width="20" height="20" style="display:none"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        <svg id="iconSun" class="ic"><use href="#i-sun"/></svg>
+        <svg id="iconMoon" class="ic" style="display:none"><use href="#i-moon"/></svg>
       </button>
     </div>
   </header>
@@ -80,7 +216,7 @@
           <p class="eyebrow-plain" id="greetDate">Selasa, 15 September</p>
           <h1 class="hello-name" id="greetName">Halo, Atlet</h1>
         </div>
-        <button class="avatar-btn" id="openProfile">👤</button>
+        <button class="avatar-btn" id="openProfile" aria-label="Profil dan target"><svg class="ic"><use href="#i-user"/></svg></button>
       </div>
 
       <div class="ring-card">
@@ -90,8 +226,9 @@
             <circle cx="70" cy="70" r="60" class="ring-fg" id="calRing"/>
           </svg>
           <div class="ring-center">
+            <span class="ring-label">Kalori hari ini</span>
             <span class="ring-num" id="calRemaining">0</span>
-            <span class="ring-label">kkal tersisa</span>
+            <span class="ring-sub">kkal tersisa</span>
           </div>
         </div>
         <div class="ring-stats">
@@ -104,7 +241,7 @@
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-icon">😴</span>
+            <span class="stat-icon chip"><svg class="ic"><use href="#i-bed"/></svg></span>
             <span class="stat-name">Tidur</span>
           </div>
           <p class="stat-value" id="sleepLastVal">-</p>
@@ -112,7 +249,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-icon">🏋️</span>
+            <span class="stat-icon chip"><svg class="ic"><use href="#i-gym"/></svg></span>
             <span class="stat-name">Latihan</span>
           </div>
           <p class="stat-value" id="workoutTodayVal">0</p>
@@ -120,7 +257,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-icon">🏃</span>
+            <span class="stat-icon chip"><svg class="ic"><use href="#i-trend"/></svg></span>
             <span class="stat-name">Jarak</span>
           </div>
           <p class="stat-value" id="distWeekVal">0 km</p>
@@ -128,7 +265,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-top">
-            <span class="stat-icon">🔥</span>
+            <span class="stat-icon chip"><svg class="ic"><use href="#i-flame"/></svg></span>
             <span class="stat-name">Runtutan</span>
           </div>
           <p class="stat-value" id="streakVal">0 hari</p>
@@ -143,31 +280,49 @@
 
       <h2 class="section-title">Mulai cepat</h2>
       <div class="quick-row">
-        <button class="quick-btn" data-goto="view-run" data-mode="running">🏃 Lari</button>
-        <button class="quick-btn" data-goto="view-run" data-mode="cycling">🚴 Sepeda</button>
-        <button class="quick-btn" data-goto="view-workout">🏋️ Latihan</button>
-        <button class="quick-btn" data-goto="view-food">🍽️ Catat Makan</button>
+        <button class="quick-btn" data-goto="view-run" data-mode="running">
+          <span class="chip"><svg class="ic"><use href="#i-footprints"/></svg></span>
+          <span class="q-text"><strong>Lari</strong><small>Mulai lari</small></span>
+        </button>
+        <button class="quick-btn" data-goto="view-run" data-mode="cycling">
+          <span class="chip"><svg class="ic"><use href="#i-bike"/></svg></span>
+          <span class="q-text"><strong>Sepeda</strong><small>Mulai bersepeda</small></span>
+        </button>
+        <button class="quick-btn" data-goto="view-workout">
+          <span class="chip"><svg class="ic"><use href="#i-gym"/></svg></span>
+          <span class="q-text"><strong>Latihan</strong><small>Sesi baru</small></span>
+        </button>
+        <button class="quick-btn" data-goto="view-food">
+          <span class="chip"><svg class="ic"><use href="#i-food"/></svg></span>
+          <span class="q-text"><strong>Catat Makan</strong><small>Tambah makanan</small></span>
+        </button>
       </div>
     </section>
 
     <!-- WORKOUT -->
     <section id="view-workout" class="view">
       <div class="view-head">
-        <h1>Latihan</h1>
-        <button class="pill-btn" id="newWorkoutBtn">+ Sesi baru</button>
+        <div>
+          <h1>Latihan</h1>
+          <p class="view-sub">Catat sesi latihanmu</p>
+        </div>
+        <button class="pill-btn" id="newWorkoutBtn"><svg class="ic"><use href="#i-plus"/></svg> Sesi baru</button>
       </div>
 
       <div id="activeWorkoutBox" class="active-box" style="display:none">
         <div class="active-box-head">
-          <strong id="activeWorkoutName">Sesi Latihan</strong>
+          <div>
+            <p class="box-eyebrow">Sedang berlangsung</p>
+            <strong id="activeWorkoutName">Sesi Latihan</strong>
+          </div>
           <span id="activeWorkoutTimer" class="mono-timer">00:00</span>
         </div>
         <div id="exerciseList" class="exercise-list"></div>
         <div class="row-gap">
-          <input id="exerciseNameInput" placeholder="Nama latihan (mis. Bench Press)" class="text-input">
-          <button id="addExerciseBtn" class="pill-btn ghost">+ Tambah</button>
+          <input id="exerciseNameInput" placeholder="Nama latihan, mis. Bench Press" class="text-input" autocomplete="off">
+          <button id="addExerciseBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-plus"/></svg> Tambah</button>
         </div>
-        <button id="finishWorkoutBtn" class="cta-btn">Selesai & Simpan</button>
+        <button id="finishWorkoutBtn" class="cta-btn"><svg class="ic"><use href="#i-stop"/></svg> Selesai & Simpan</button>
       </div>
 
       <h2 class="section-title">Riwayat</h2>
@@ -177,10 +332,13 @@
     <!-- RUN / CYCLE -->
     <section id="view-run" class="view">
       <div class="view-head">
-        <h1 id="runTitle">Lari</h1>
+        <div>
+          <h1 id="runTitle">Aktivitas</h1>
+          <p class="view-sub">Lacak lari & sepeda dengan GPS</p>
+        </div>
         <div class="seg-toggle" id="runModeToggle">
-          <button data-mode="running" class="seg-btn active">Lari</button>
-          <button data-mode="cycling" class="seg-btn">Sepeda</button>
+          <button data-mode="running" class="seg-btn active"><svg class="ic"><use href="#i-footprints"/></svg> Lari</button>
+          <button data-mode="cycling" class="seg-btn"><svg class="ic"><use href="#i-bike"/></svg> Sepeda</button>
         </div>
       </div>
 
@@ -202,9 +360,9 @@
       </div>
 
       <div class="run-controls">
-        <button id="runStartBtn" class="cta-btn">Mulai</button>
-        <button id="runPauseBtn" class="pill-btn ghost" style="display:none">Jeda</button>
-        <button id="runStopBtn" class="pill-btn danger" style="display:none">Selesai</button>
+        <button id="runStartBtn" class="cta-btn run-start"><svg class="ic"><use href="#i-play"/></svg> Mulai</button>
+        <button id="runPauseBtn" class="pill-btn run-toggle" style="display:none">Jeda</button>
+        <button id="runStopBtn" class="pill-btn danger run-stop" style="display:none"><svg class="ic"><use href="#i-stop"/></svg> Selesai</button>
       </div>
       <p id="gpsStatus" class="gps-status"></p>
 
@@ -215,16 +373,20 @@
     <!-- FOOD -->
     <section id="view-food" class="view">
       <div class="view-head">
-        <h1>Makan</h1>
+        <div>
+          <h1>Makan</h1>
+          <p class="view-sub">Pantau asupan harianmu</p>
+        </div>
         <input type="date" id="foodDate" class="date-input">
       </div>
 
       <div class="macro-card">
         <div class="macro-row">
-          <div class="macro-bar-wrap">
-            <div class="macro-bar-bg"><div class="macro-bar-fg" id="calBarFg"></div></div>
-            <p><span id="foodCalIn">0</span> / <span id="foodCalTarget">0</span> kkal</p>
+          <div class="macro-head">
+            <span class="macro-label"><svg class="ic"><use href="#i-flame"/></svg> Kalori</span>
+            <span class="macro-value"><b id="foodCalIn">0</b> / <span id="foodCalTarget">0</span> kkal</span>
           </div>
+          <div class="macro-bar-bg"><div class="macro-bar-fg" id="calBarFg"></div></div>
         </div>
         <div class="macro-mini-grid">
           <div class="macro-mini"><span id="proteinVal">0g</span><small>Protein</small></div>
@@ -237,18 +399,23 @@
 
       <h2 class="section-title">Target Harian</h2>
       <div class="goal-form">
-        <label>Kalori <input type="number" id="goalCal" class="text-input small"></label>
-        <label>Protein (g) <input type="number" id="goalProtein" class="text-input small"></label>
-        <label>Karbo (g) <input type="number" id="goalCarb" class="text-input small"></label>
-        <label>Lemak (g) <input type="number" id="goalFat" class="text-input small"></label>
-        <button id="saveGoalBtn" class="pill-btn">Simpan Target</button>
+        <div class="goal-grid">
+          <label>Kalori <input type="number" id="goalCal" class="text-input small"></label>
+          <label>Protein (g) <input type="number" id="goalProtein" class="text-input small"></label>
+          <label>Karbo (g) <input type="number" id="goalCarb" class="text-input small"></label>
+          <label>Lemak (g) <input type="number" id="goalFat" class="text-input small"></label>
+        </div>
+        <button id="saveGoalBtn" class="pill-btn"><svg class="ic"><use href="#i-target"/></svg> Simpan Target</button>
       </div>
     </section>
 
     <!-- SLEEP -->
     <section id="view-sleep" class="view">
       <div class="view-head">
-        <h1>Tidur</h1>
+        <div>
+          <h1>Tidur</h1>
+          <p class="view-sub">Evaluasi istirahatmu</p>
+        </div>
       </div>
 
       <div class="sleep-log-card">
@@ -258,16 +425,16 @@
         </div>
         <label>Tanggal bangun <input type="date" id="sleepDate" class="text-input small"></label>
         <div class="quality-row">
-          <span>Kualitas</span>
+          <span>Kualitas tidur</span>
           <div class="quality-btns" id="qualityBtns">
-            <button data-q="1">😩</button>
-            <button data-q="2">😕</button>
-            <button data-q="3">😐</button>
-            <button data-q="4">🙂</button>
-            <button data-q="5">😴</button>
+            <button data-q="1" aria-label="Buruk"><svg class="ic"><use href="#i-q1"/></svg></button>
+            <button data-q="2" aria-label="Kurang baik"><svg class="ic"><use href="#i-q2"/></svg></button>
+            <button data-q="3" aria-label="Cukup"><svg class="ic"><use href="#i-q3"/></svg></button>
+            <button data-q="4" aria-label="Baik"><svg class="ic"><use href="#i-q4"/></svg></button>
+            <button data-q="5" aria-label="Sangat baik"><svg class="ic"><use href="#i-q5"/></svg></button>
           </div>
         </div>
-        <button id="saveSleepBtn" class="cta-btn">Simpan Tidur</button>
+        <button id="saveSleepBtn" class="cta-btn"><svg class="ic"><use href="#i-bed"/></svg> Simpan Tidur</button>
       </div>
 
       <div class="sleep-chart-card">
@@ -284,19 +451,19 @@
   <!-- BOTTOM NAV -->
   <nav class="bottomnav">
     <button class="nav-btn active" data-view="view-dashboard">
-      <span class="nav-icon">🏠</span><span>Beranda</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-home"/></svg></span><span>Beranda</span>
     </button>
     <button class="nav-btn" data-view="view-workout">
-      <span class="nav-icon">🏋️</span><span>Latihan</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-gym"/></svg></span><span>Latihan</span>
     </button>
     <button class="nav-btn" data-view="view-run">
-      <span class="nav-icon">🏃</span><span>Lari</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-activity"/></svg></span><span>Aktivitas</span>
     </button>
     <button class="nav-btn" data-view="view-food">
-      <span class="nav-icon">🍽️</span><span>Makan</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-food"/></svg></span><span>Makan</span>
     </button>
     <button class="nav-btn" data-view="view-sleep">
-      <span class="nav-icon">😴</span><span>Tidur</span>
+      <span class="nav-icon"><svg class="ic"><use href="#i-bed"/></svg></span><span>Tidur</span>
     </button>
   </nav>
 
@@ -307,13 +474,16 @@
   <div class="modal-sheet">
     <div class="modal-head">
       <h2>Profil & Target</h2>
-      <button id="closeProfile" class="icon-btn">✕</button>
+      <button id="closeProfile" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
     <label>Nama <input id="profName" class="text-input"></label>
-    <label>Berat badan (kg) <input type="number" id="profWeight" class="text-input"></label>
-    <label>Tinggi badan (cm) <input type="number" id="profHeight" class="text-input"></label>
+    <div class="row2">
+      <label>Berat badan (kg) <input type="number" id="profWeight" class="text-input"></label>
+      <label>Tinggi badan (cm) <input type="number" id="profHeight" class="text-input"></label>
+    </div>
     <label>Target jam tidur <input type="number" step="0.5" id="profSleepTarget" class="text-input"></label>
     <button id="saveProfileBtn" class="cta-btn">Simpan</button>
+    <button id="logoutBtn" class="logout-btn"><svg class="ic"><use href="#i-logout"/></svg> Keluar</button>
   </div>
 </div>
 
@@ -322,7 +492,7 @@
   <div class="modal-sheet">
     <div class="modal-head">
       <h2 id="foodModalTitle">Tambah Makanan</h2>
-      <button id="closeFoodModal" class="icon-btn">✕</button>
+      <button id="closeFoodModal" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
     <label>Nama makanan <input id="foodName" class="text-input"></label>
     <label>Kalori (kkal) <input type="number" id="foodKcal" class="text-input"></label>
@@ -331,11 +501,12 @@
       <label>Karbo (g) <input type="number" id="foodCarb" class="text-input"></label>
       <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
     </div>
-    <button id="saveFoodBtn" class="cta-btn">Simpan</button>
+    <button id="saveFoodBtn" class="cta-btn"><svg class="ic"><use href="#i-plus"/></svg> Simpan</button>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/api.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/nav.js"></script>

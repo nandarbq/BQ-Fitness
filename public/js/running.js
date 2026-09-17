@@ -49,7 +49,6 @@ const RUNNING = (() => {
 
   function setMode(m) {
     mode = m;
-    document.getElementById('runTitle').textContent = m === 'running' ? 'Lari' : 'Sepeda';
     document.querySelectorAll('#runModeToggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
   }
 
@@ -69,7 +68,7 @@ const RUNNING = (() => {
     document.getElementById('runStartBtn').style.display = 'none';
     document.getElementById('runPauseBtn').style.display = 'inline-block';
     document.getElementById('runStopBtn').style.display = 'inline-block';
-    document.getElementById('runPauseBtn').textContent = 'Jeda';
+    document.getElementById('runPauseBtn').innerHTML = ICON('pause') + ' Jeda';
 
     requestWakeLock();
     setStatus('Mencari sinyal GPS…');
@@ -105,12 +104,12 @@ const RUNNING = (() => {
     if (!paused) {
       paused = true;
       pauseStarted = Date.now();
-      document.getElementById('runPauseBtn').textContent = 'Lanjut';
+      document.getElementById('runPauseBtn').innerHTML = ICON('play') + ' Lanjut';
       setStatus('Dijeda');
     } else {
       paused = false;
       elapsedBeforePause += Date.now() - pauseStarted;
-      document.getElementById('runPauseBtn').textContent = 'Jeda';
+      document.getElementById('runPauseBtn').innerHTML = ICON('pause') + ' Jeda';
       setStatus('GPS aktif');
     }
   }
@@ -225,7 +224,7 @@ const RUNNING = (() => {
     cache.slice(0, 30).forEach(a => {
       const el = document.createElement('div');
       el.className = 'history-item';
-      const icon = a.type === 'running' ? '🏃' : '🚴';
+      const icon = a.type === 'running' ? ICON('footprints') : ICON('bike');
       el.innerHTML = `
         <div class="h-left">
           <strong>${icon} ${a.type === 'running' ? 'Lari' : 'Sepeda'}</strong>

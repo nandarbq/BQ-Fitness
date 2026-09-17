@@ -1,20 +1,33 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const supabase = require('../db/database');
-const { requireAuth, signToken } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 
-function publicUser(row) {
+function publicProfile(row) {
   return {
     id: row.id,
     name: row.name,
-    email: row.email,
     weight: row.weight,
     height: row.height,
     sleepTarget: row.sleep_target
   };
+}
+
+function isDuplicateEmailError(error) {
+  const message = (error && error.message) || '';
+  return /already registered|already been registered|user already exists|email.*exists/i.test(message);
+}
+
+async function getProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 router.post('/register', asyncHandler(async (req, res) => {
@@ -26,28 +39,41 @@ router.post('/register', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Kata sandi minimal 6 karakter.' });
   }
   const normalizedEmail = String(email).trim().toLowerCase();
+  const trimmedName = String(name).trim();
 
-  const { data: existing } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
-  if (existing) {
-    return res.status(409).json({ error: 'Email ini sudah terdaftar. Silakan masuk.' });
+  const { data: created, error } = await supabase.auth.admin.createUser({
+    email: normalizedEmail,
+    password,
+    email_confirm: true,
+    user_metadata: { name: trimmedName }
+  });
+  if (error) {
+    if (isDuplicateEmailError(error)) {
+      return res.status(409).json({ error: 'Email ini sudah terdaftar. Silakan masuk.' });
+    }
+    throw error;
   }
 
-  const hash = bcrypt.hashSync(password, 10);
-  const { data: user, error } = await supabase
-    .from('users')
-    .insert({ name: String(name).trim(), email: normalizedEmail, password_hash: hash })
-    .select('*')
-    .single();
-  if (error) throw error;
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert({ id: created.user.id, name: trimmedName });
+  if (profileError) throw profileError;
 
-  await supabase.from('food_goals').insert({ user_id: user.id });
+  const { error: goalError } = await supabase
+    .from('food_goals')
+    .insert({ user_id: created.user.id });
+  if (goalError) throw goalError;
 
-  const token = signToken(user.id);
-  res.status(201).json({ token, user: publicUser(user) });
+  const { data: signIn, error: signInError } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password
+  });
+  if (signInError) throw signInError;
+
+  res.status(201).json({
+    session: signIn.session,
+    user: { id: created.user.id, name: trimmedName, weight: 65, height: 170, sleepTarget: 8 }
+  });
 }));
 
 router.post('/login', asyncHandler(async (req, res) => {
@@ -56,26 +82,95 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Email dan kata sandi wajib diisi.' });
   }
   const normalizedEmail = String(email).trim().toLowerCase();
-  const { data: user } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', normalizedEmail)
-    .maybeSingle();
-  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password
+  });
+  if (error || !data.session) {
     return res.status(401).json({ error: 'Email atau kata sandi salah.' });
   }
-  const token = signToken(user.id);
-  res.json({ token, user: publicUser(user) });
+
+  const profile = await getProfile(data.user.id);
+  res.json({
+    session: data.session,
+    user: profile ? publicProfile(profile) : { id: data.user.id, name: '', weight: 65, height: 170, sleepTarget: 8 }
+  });
+}));
+
+router.post('/refresh', asyncHandler(async (req, res) => {
+  const { refresh_token } = req.body || {};
+  if (!refresh_token) {
+    return res.status(400).json({ error: 'refresh_token wajib diisi.' });
+  }
+
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+  if (error || !data.session) {
+    return res.status(401).json({ error: 'Sesi tidak valid. Silakan login kembali.' });
+  }
+
+  const profile = await getProfile(data.user.id);
+  res.json({ session: data.session, user: profile ? publicProfile(profile) : null });
+}));
+
+router.post('/logout', requireAuth, asyncHandler(async (req, res) => {
+  const { refresh_token } = req.body || {};
+  if (refresh_token) {
+    const { createClient } = require('@supabase/supabase-js');
+    const ephemeral = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { persistSession: false } }
+    );
+    await ephemeral.auth.setSession({
+      access_token: req.headers.authorization.slice(7),
+      refresh_token
+    });
+    await ephemeral.auth.signOut();
+  }
+  res.json({ ok: true });
 }));
 
 router.get('/me', requireAuth, asyncHandler(async (req, res) => {
-  const { data: user } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', req.userId)
-    .maybeSingle();
-  if (!user) return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
-  res.json({ user: publicUser(user) });
+  const profile = await getProfile(req.userId);
+  if (!profile) return res.status(404).json({ error: 'Profil tidak ditemukan.' });
+  res.json({ user: publicProfile(profile) });
+}));
+
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ error: 'Email wajib diisi.' });
+  }
+  const redirectTo = process.env.APP_URL
+    ? process.env.APP_URL.replace(/\/$/, '') + '/reset-password.html'
+    : undefined;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    String(email).trim().toLowerCase(),
+    redirectTo ? { redirectTo } : undefined
+  );
+  if (error) {
+    return res.status(400).json({ error: 'Gagal mengirim email reset. Coba lagi nanti.' });
+  }
+  res.json({ ok: true });
+}));
+
+router.post('/update-password', asyncHandler(async (req, res) => {
+  const { access_token, password } = req.body || {};
+  if (!access_token || !password || password.length < 6) {
+    return res.status(400).json({ error: 'Token dan kata sandi minimal 6 karakter wajib diisi.' });
+  }
+
+  const { data, error } = await supabase.auth.getUser(access_token);
+  if (error || !data.user) {
+    return res.status(401).json({ error: 'Tautan reset tidak valid atau sudah kedaluwarsa.' });
+  }
+
+  const { error: updateError } = await supabase.auth.admin.updateUserById(data.user.id, { password });
+  if (updateError) throw updateError;
+
+  res.json({ ok: true });
 }));
 
 module.exports = router;
