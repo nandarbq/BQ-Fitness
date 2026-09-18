@@ -267,6 +267,15 @@
         </div>
       </div>
 
+      <div id="programMiniCard" class="program-mini" style="display:none">
+        <div class="program-mini-head">
+          <span class="program-chip" id="miniProgramChip">BULKING</span>
+          <span id="miniProgramText">Minggu ke-3 dari 12</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="miniProgramProgress"></div></div>
+        <p class="program-mini-sub" id="miniProgramSub">BB 65 kg → target 68 kg</p>
+      </div>
+
       <div class="insight-card" id="insightCard" style="display:none">
         <span class="insight-tag">Wawasan</span>
         <p id="insightText"></p>
@@ -298,10 +307,21 @@
       <div class="view-head">
         <div>
           <h1>Latihan</h1>
-          <p class="view-sub">Catat sesi latihanmu</p>
+          <p class="view-sub">Program bulking/cutting-mu</p>
         </div>
-        <button class="pill-btn" id="newWorkoutBtn"><svg class="ic"><use href="#i-plus"/></svg> Sesi baru</button>
       </div>
+
+      <div id="programCard" class="program-card">
+        <p class="empty-note">Memuat program…</p>
+      </div>
+
+      <h2 class="section-title" id="todayTitle">Hari Ini</h2>
+      <div id="todaySessionCard" class="session-card">
+        <p class="empty-note">Memuat porsi latihan…</p>
+      </div>
+
+      <h2 class="section-title">Pelan Mingguan</h2>
+      <div id="splitWeek" class="split-week"></div>
 
       <div id="activeWorkoutBox" class="active-box" style="display:none">
         <div class="active-box-head">
@@ -313,7 +333,7 @@
         </div>
         <div id="exerciseList" class="exercise-list"></div>
         <div class="row-gap">
-          <input id="exerciseNameInput" placeholder="Nama latihan, mis. Bench Press" class="text-input" autocomplete="off">
+          <input id="exerciseNameInput" placeholder="Tambah latihan sendiri, mis. Bench Press" class="text-input" autocomplete="off">
           <button id="addExerciseBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-plus"/></svg> Tambah</button>
         </div>
         <button id="finishWorkoutBtn" class="cta-btn"><svg class="ic"><use href="#i-stop"/></svg> Selesai & Simpan</button>
@@ -390,6 +410,8 @@
       </div>
 
       <div id="mealSections"></div>
+
+      <div id="foodAutoNote" class="auto-note" style="display:none"></div>
 
       <h2 class="section-title">Target Harian</h2>
       <div class="goal-form">
@@ -506,14 +528,94 @@
   </div>
 </div>
 
+<!-- ONBOARDING MODAL (wajib pertama kali) -->
+<div id="onboardModal" class="modal-overlay" data-no-close="true">
+  <div class="modal-sheet onboard-sheet">
+    <div class="modal-head">
+      <h2>Kenalan dulu</h2>
+      <p class="modal-sub">Tulis data dasar di bawah supaya rekomendasi program-mu akurat.</p>
+    </div>
+
+    <div id="onboardError" class="auth-error"></div>
+
+    <div id="obStepData">
+      <p class="field-label">Jenis kelamin</p>
+      <div class="seg-toggle" id="obGender">
+        <button data-v="pria" class="seg-btn active">Pria</button>
+        <button data-v="wanita" class="seg-btn">Wanita</button>
+      </div>
+
+      <div class="row3">
+        <label>Umur (th) <input type="number" id="obAge" class="text-input" min="10" max="100"></label>
+        <label>Berat (kg) <input type="number" id="obWeight" class="text-input" min="30" max="300"></label>
+        <label>Tinggi (cm) <input type="number" id="obHeight" class="text-input" min="100" max="250"></label>
+      </div>
+
+      <p class="field-label">Seberapa aktif harianmu?</p>
+      <div class="goal-grid" id="obActivity">
+        <button class="goal-opt" data-v="1">Sedentari<small>Kerja duduk, jarang olahraga</small></button>
+        <button class="goal-opt active" data-v="3">Sedang<small>Olahraga 3–5 hari/minggu</small></button>
+        <button class="goal-opt" data-v="2">Ringan<small>Olahraga 1–3 hari/minggu</small></button>
+        <button class="goal-opt" data-v="4">Berat<small>Olahraga 6–7 hari/minggu</small></button>
+        <button class="goal-opt" data-v="5">Atlet<small>Latihan keras hampir tiap hari</small></button>
+      </div>
+
+      <div id="obGoalBox" class="ob-goal-box" style="display:none">
+        <p class="field-label">Tujuanmu?</p>
+        <div class="row2">
+          <button class="goal-opt" id="obGoalBulk">Makin berisi<small>Naikkan BB & bangun otot</small></button>
+          <button class="goal-opt" id="obGoalCut">Makin ramping<small>Turunkan BB & lemak</small></button>
+        </div>
+      </div>
+
+      <button id="obPreviewBtn" class="cta-btn">Lihat Rekomendasi Program</button>
+    </div>
+
+    <div id="obStepSummary" style="display:none">
+      <div id="obResultCard" class="program-card"></div>
+      <button id="obBackBtn" class="pill-btn ghost">Ubah data</button>
+      <button id="obConfirmBtn" class="cta-btn">Mulai Program Ini</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY WEIGHT MODAL (wajib tiap 7 hari) -->
+<div id="weeklyWeightModal" class="modal-overlay" data-no-close="true">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2><svg class="ic"><use href="#i-target"/></svg> Perbarui Berat Badan</h2>
+    </div>
+    <p id="weeklyWeightNote" class="modal-sub">Update BB mingguan diperlukan supaya kalori & latihan tetap sesuai program.</p>
+    <div id="weeklyWeightStats" class="weight-stats"></div>
+    <label>Berat badan sekarang (kg) <input type="number" id="weeklyWeightInput" class="text-input" min="30" max="300"></label>
+    <p id="weeklyWeightError" class="auth-error"></p>
+    <button id="saveWeeklyWeightBtn" class="cta-btn">Simpan</button>
+  </div>
+</div>
+
+<!-- TRANSITION MODAL (target tercapai) -->
+<div id="transitionModal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Target Tercapai!</h2>
+      <p class="modal-sub" id="transitionNote">Sekarang waktunya pindah ke fase berikutnya.</p>
+    </div>
+    <div id="transitionOptions"></div>
+    <p id="transitionError" class="auth-error"></p>
+    <button id="transitionBackBtn" class="pill-btn ghost">Nanti saja</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="js/icons.js"></script>
 <script src="js/api.js"></script>
+<script src="js/workout-program.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/auth-ui.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/workout.js"></script>
+<script src="js/onboarding.js"></script>
 <script src="js/running.js"></script>
 <script src="js/food.js"></script>
 <script src="js/sleep.js"></script>

@@ -106,6 +106,30 @@ const API = (() => {
     return data.user;
   }
 
+  function setUser(user) {
+    if (!user) return;
+    currentUser = user;
+    localStorage.setItem('bq_user', JSON.stringify(user));
+  }
+
+  // ---- program ----
+  async function getProgram() { return request('GET', '/program'); }
+  async function onboard(payload) {
+    const data = await request('POST', '/program/onboard', payload);
+    setUser(data.user);
+    return data;
+  }
+  async function updateWeight(weightKg) {
+    const data = await request('POST', '/program/weight', { weight: weightKg });
+    setUser(data.user);
+    return data;
+  }
+  async function switchProgram(payload) {
+    const data = await request('POST', '/program/switch', payload);
+    setUser(data.user);
+    return data;
+  }
+
   // ---- workouts ----
   async function getWorkouts() { return (await request('GET', '/workouts')).workouts; }
   async function addWorkout(w) { return (await request('POST', '/workouts', w)).workout; }
@@ -139,8 +163,9 @@ const API = (() => {
   }
 
   return {
-    isAuthed, getUser, register, login, fetchMe, logout, saveProfile,
+    isAuthed, getUser, register, login, fetchMe, logout, saveProfile, setUser,
     resetPassword, updatePassword,
+    getProgram, onboard, updateWeight, switchProgram,
     getWorkouts, addWorkout, deleteWorkout,
     getActivities, addActivity, deleteActivity,
     getFoodLogs, addFoodLog, deleteFoodLog, getFoodGoal, saveFoodGoal,

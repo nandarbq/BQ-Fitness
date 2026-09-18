@@ -5,6 +5,7 @@ const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
+const programRoutes = require('./routes/program');
 const workoutRoutes = require('./routes/workouts');
 const activityRoutes = require('./routes/activities');
 const foodRoutes = require('./routes/food');
@@ -18,6 +19,7 @@ app.use(express.json({ limit: '2mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/program', programRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/food', foodRoutes);

@@ -24,6 +24,7 @@ const FOOD = (() => {
     await loadGoal();
     await loadLogs();
     render();
+    renderAutoNote();
     await refreshTodayCal();
   }
 
@@ -156,6 +157,23 @@ const FOOD = (() => {
         const todayLogs = await API.getFoodLogs(API.todayISO());
         todayCalCache = todayLogs.reduce((s, e) => s + e.kcal, 0);
       } catch (e) { /* ignore */ }
+    }
+  }
+
+  function renderAutoNote() {
+    const note = document.getElementById('foodAutoNote');
+    if (!note) return;
+    const st = window.WORKOUT && WORKOUT.programStatus();
+    if (st && st.program) {
+      const p = st.program;
+      const info = PROGRAM_INFO[p.program] || {};
+      const targetPart = goalCache && p.targetWeight
+        ? ` · target BB ${p.targetWeight} kg (minggu ke-${Math.min(p.elapsedWeeks + 1, p.durationWeeks)} dari ${p.durationWeeks})`
+        : '';
+      note.innerHTML = `<svg class="ic"><use href="#i-zap"/></svg> Target makan dihitung <b>otomatis</b> dari program <b>${eh(info.title || p.program)}</b> kamu${targetPart}. Ikuti target ini supaya program berjalan maksimal.`;
+      note.style.display = 'flex';
+    } else {
+      note.style.display = 'none';
     }
   }
 

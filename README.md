@@ -19,13 +19,17 @@ bq-fitness/
 ├── .env.example            # contoh file environment variable
 ├── db/
 │   ├── schema.sql            # skema tabel BQ Fitness (reset + buat ulang, versi Supabase Auth)
+│   ├── migration_program.sql # migrasi tambahan fitur program (tidak menghapus data)
 │   └── database.js           # koneksi ke Supabase (client @supabase/supabase-js)
+├── lib/
+│   └── program.js            # logika rekomendasi program & target makan
 ├── middleware/
 │   ├── auth.js               # verifikasi token lewat Supabase Auth
 │   └── asyncHandler.js       # pembungkus handler async agar error sampai ke Express
 ├── routes/
 │   ├── auth.js              # register, login, refresh, logout, reset/update password, /me
 │   ├── profile.js
+│   ├── program.js            # onboarding, status program, update BB, transisi program
 │   ├── workouts.js
 │   ├── activities.js        # lari & sepeda dengan titik GPS
 │   ├── food.js
@@ -39,8 +43,10 @@ bq-fitness/
     ├── icons/
     └── js/
         ├── api.js            # client API (session access/refresh token dengan auto-refresh)
+        ├── workout-program.js # katalog split & gerakan (bulking/cutting)
         ├── auth-ui.js        # layar login/daftar + lupa kata sandi
         ├── reset-password.js # logika halaman atur ulang kata sandi
+        ├── onboarding.js     # alur wajib: onboarding awal, BB mingguan, transisi program
         ├── theme.js, nav.js
         ├── dashboard.js, workout.js, running.js, food.js, sleep.js
         └── app.js
@@ -109,11 +115,13 @@ Yang perlu diperhatikan saat deploy:
 
 Skrip `db/schema.sql` dipakai untuk instal baru sekaligus reset: di bagian atasnya dia menghapus tabel lama (termasuk `public.users` versi lama) lalu membuat ulang dari nol. Cukup jalankan ulang sekali di SQL Editor — data lama ikut terhapus, lalu tinggal daftar akun baru.
 
+> **Migrasi program (tidak menghapus data):** kalau database kamu sudah pernah dipakai sebelum fitur program (bulking/cutting, riwayat BB), jalankan **`db/migration_program.sql`** sekali di SQL Editor. Skrip ini hanya menambah kolom & tabel (`profiles` + `weight_logs`) tanpa menghapus data lama. Setelah itu aplikasi akan meminta user selesaikan onboarding BB/TB saat login.
+
 ## Fitur
 
 - **Autentikasi akun (Supabase Auth)** — daftar & masuk, data tersimpan di server per-pengguna (bisa dipakai dari HP mana pun, tidak hilang saat ganti device/browser). Ada **lupa kata sandi** via email, sesi access/refresh token yang di-refresh otomatis, dan logout yang mencabut sesi server
 - **Dashboard** — ring kalori, ringkasan tidur/latihan/jarak, streak harian, insight otomatis (korelasi tidur vs hari aktif)
-- **Latihan** — sesi latihan dengan timer & daftar gerakan, riwayat tersimpan
+- **Latihan** — **program bulking/cutting otomatis**: onboarding awal wajib isi BB/TB/gender/umur/aktivitas, aplikasi merekomendasikan program + target BB + durasi ideal + target makan (kalori/makro) otomatis. Update BB wajib tiap 7 hari, halaman latihan menampilkan porsi latihan hari ini sesuai split (Chest & Triceps → Back & Biceps → Rest → Shoulder → Leg Day → Rest/Cardio) lengkap dengan set × repetisi dan tracker set, plus transisi program saat target tercapai. Riwayat tetap tersimpan.
 - **Lari/Sepeda (ala Strava)** — pelacakan GPS langsung di peta, jarak/waktu/pace/kalori, riwayat rute
 - **Makan** — catatan per waktu makan, kalori & makro, target harian yang bisa diatur
 - **Tidur** — catatan jam tidur-bangun & kualitas, grafik 7 hari

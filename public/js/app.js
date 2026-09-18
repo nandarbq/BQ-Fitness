@@ -40,15 +40,18 @@ let appBootstrapped = false;
 
 async function bootstrapApp() {
   initProfile();
+  ONBOARDING.init();
   if (appBootstrapped) {
     // returning session after logout/login again: refresh everything
     await Promise.all([WORKOUT.refresh(), RUNNING.refresh(), FOOD.refresh(), SLEEP.refresh()]);
     DASHBOARD.render();
+    ONBOARDING.start();
     return;
   }
   appBootstrapped = true;
   await Promise.all([WORKOUT.init(), RUNNING.init(), FOOD.init(), SLEEP.init()]);
   DASHBOARD.init();
+  ONBOARDING.start();
 
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await API.logout();

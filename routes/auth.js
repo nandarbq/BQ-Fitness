@@ -11,7 +11,15 @@ function publicProfile(row) {
     name: row.name,
     weight: row.weight,
     height: row.height,
-    sleepTarget: row.sleep_target
+    sleepTarget: row.sleep_target,
+    gender: row.gender,
+    age: row.age,
+    activityLevel: row.activity_level,
+    program: row.program,
+    programStart: row.program_start,
+    targetWeight: row.target_weight,
+    durationWeeks: row.duration_weeks,
+    lastWeightDate: row.last_weight_date
   };
 }
 

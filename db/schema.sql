@@ -1,10 +1,27 @@
 create table if not exists public.profiles (
-  id           uuid primary key references auth.users(id) on delete cascade,
-  name         text not null,
-  weight       real default 65,
-  height       real default 170,
-  sleep_target real default 8,
-  created_at   timestamptz default now()
+  id             uuid primary key references auth.users(id) on delete cascade,
+  name           text not null,
+  weight         real default 65,
+  height         real default 170,
+  sleep_target   real default 8,
+  gender         text default null,
+  age            integer default null,
+  activity_level integer default null,
+  program        text default null,
+  program_start  date default null,
+  start_weight   real default null,
+  target_weight  real default null,
+  duration_weeks integer default null,
+  last_weight_date date default null,
+  created_at     timestamptz default now()
+);
+
+create table if not exists public.weight_logs (
+  id         bigint generated always as identity primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  date       date not null,
+  weight_kg  real not null,
+  created_at timestamptz default now()
 );
 
 create table if not exists public.food_goals (
@@ -65,6 +82,7 @@ create index if not exists idx_workouts_user on public.workouts(user_id, date);
 create index if not exists idx_activities_user on public.activities(user_id, date);
 create index if not exists idx_food_logs_user on public.food_logs(user_id, date);
 create index if not exists idx_sleep_logs_user on public.sleep_logs(user_id, date);
+create index if not exists idx_weight_logs_user on public.weight_logs(user_id, date);
 
 -- Row Level Security: tiap pengguna hanya boleh mengakses datanya sendiri.
 -- Backend memakai service_role key (otomatis melewati RLS), jadi kebijakan ini
@@ -76,6 +94,7 @@ alter table public.workouts   enable row level security;
 alter table public.activities enable row level security;
 alter table public.food_logs  enable row level security;
 alter table public.sleep_logs enable row level security;
+alter table public.weight_logs enable row level security;
 
 drop policy if exists profiles_own on public.profiles;
 create policy profiles_own on public.profiles
@@ -99,4 +118,8 @@ create policy food_logs_own on public.food_logs
 
 drop policy if exists sleep_logs_own on public.sleep_logs;
 create policy sleep_logs_own on public.sleep_logs
+  for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+drop policy if exists weight_logs_own on public.weight_logs;
+create policy weight_logs_own on public.weight_logs
   for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);

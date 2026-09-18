@@ -37,6 +37,7 @@ const DASHBOARD = (() => {
 
     document.getElementById('workoutTodayVal').textContent = WORKOUT.countThisWeek();
     document.getElementById('distWeekVal').textContent = RUNNING.weekDistanceKm().toFixed(1) + ' km';
+    renderProgramMini();
 
     let allFoodDates = [];
     try {
@@ -46,6 +47,22 @@ const DASHBOARD = (() => {
 
     document.getElementById('streakVal').textContent = computeStreak(allFoodDates) + ' hari';
     renderInsight();
+  }
+
+function renderProgramMini() {
+    const mini = document.getElementById('programMiniCard');
+    if (!mini) return;
+    const st = WORKOUT.programStatus();
+    if (!st || !st.program) { mini.style.display = 'none'; return; }
+    const p = st.program;
+    const info = PROGRAM_INFO[p.program] || {};
+    document.getElementById('miniProgramChip').textContent = (p.program || '').toUpperCase();
+    document.getElementById('miniProgramText').textContent =
+      (p.durationWeeks ? `Minggu ke-${Math.min(p.elapsedWeeks + 1, p.durationWeeks)} dari ${p.durationWeeks} · ` : 'Program aktif · ') + (info.title || p.program);
+    document.getElementById('miniProgramProgress').style.width = (p.progressPct || 0) + '%';
+    document.getElementById('miniProgramSub').textContent =
+      p.targetWeight ? `BB ${p.currentWeight} kg → target ${p.targetWeight} kg (${p.progressPct}%)` : `BB ${p.currentWeight} kg · pertahankan`;
+    mini.style.display = 'block';
   }
 
   function computeStreak(allFoodDates) {
