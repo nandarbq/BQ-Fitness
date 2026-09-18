@@ -2,6 +2,7 @@ const express = require('express');
 const supabase = require('../db/database');
 const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
+const { parseRestDays } = require('../lib/program');
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ function publicProfile(row) {
     age: row.age,
     activityLevel: row.activity_level,
     intensity: row.intensity,
+    restDays: parseRestDays(row.rest_days),
     program: row.program,
     programStart: row.program_start,
     targetWeight: row.target_weight,

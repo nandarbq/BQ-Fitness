@@ -156,6 +156,7 @@ const ONBOARDING = (() => {
       <p class="program-desc">${eh(info.desc)}</p>
       <p class="program-why">BMI kamu <b>${(p.bmi / 1).toFixed(1)}</b> (${bmiLabel(p.bmi)}) → direkomendasikan <b>${info.title}</b> untuk ${goalDesc}.</p>
       <p class="program-why">Intensitas <b>${eh(lvl.label)}</b> · contoh porsi hari ke-1: <b>${eh(sample.name)} — ${sample.sets} × ${eh(sample.reps)}</b>, beban saran ${sample.weight[0]}–${sample.weight[1]} kg.</p>
+      <p class="program-why">Jadwal default (bisa kamu geser nanti): latihan <b>Senin, Selasa, Kamis, Jumat</b> · rest <b>Rabu, Sabtu, Minggu</b>.</p>
       <div class="program-stats">
         <div class="p-stat"><span>Target BB</span><b>${p.target} kg</b></div>
         <div class="p-stat"><span>Berat sekarang</span><b>${d.weight} kg</b></div>

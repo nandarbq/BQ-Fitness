@@ -19,8 +19,6 @@ bq-fitness/
 ├── .env.example            # contoh file environment variable
 ├── db/
 │   ├── schema.sql            # skema tabel BQ Fitness (reset + buat ulang, versi Supabase Auth)
-│   ├── migration_program.sql # migrasi tambahan fitur program (tidak menghapus data)
-│   ├── migration_intensity.sql # migrasi tambahan kolom intensitas latihan (tidak menghapus data)
 │   └── database.js           # koneksi ke Supabase (client @supabase/supabase-js)
 ├── lib/
 │   └── program.js            # logika rekomendasi program & target makan
@@ -44,7 +42,7 @@ bq-fitness/
     ├── icons/
     └── js/
         ├── api.js            # client API (session access/refresh token dengan auto-refresh)
-        ├── workout-program.js # katalog split & gerakan dumbbell (bulking/cutting, intensitas)
+        ├── workout-program.js # jadwal mingguan & katalog gerakan dumbbell (intensitas, rest bisa digeser)
         ├── exercise-demo.js  # animasi siluet SVG "template tutor" tiap gerakan
         ├── auth-ui.js        # layar login/daftar + lupa kata sandi
         ├── reset-password.js # logika halaman atur ulang kata sandi
@@ -115,15 +113,15 @@ Yang perlu diperhatikan saat deploy:
 
 ## Reset database (kalau ada tabel versi lama)
 
-Skrip `db/schema.sql` dipakai untuk instal baru sekaligus reset: di bagian atasnya dia menghapus tabel lama (termasuk `public.users` versi lama) lalu membuat ulang dari nol. Cukup jalankan ulang sekali di SQL Editor — data lama ikut terhapus, lalu tinggal daftar akun baru.
+Satu-satunya skrip skema adalah `db/schema.sql` (sudah termasuk semua fitur program: kolom `gender/age/activity_level/intensity/rest_days`, tabel `weight_logs`, dst.). Di bagian atasnya dia menghapus tabel lama (termasuk `public.users` versi lama) lalu membuat ulang dari nol — **data lama ikut terhapus**. Cukup jalankan ulang sekali di SQL Editor, lalu tinggal daftar akun baru (tahap pengembangan, jadi boleh wipe).
 
-> **Migrasi program (tidak menghapus data):** kalau database kamu sudah pernah dipakai sebelum fitur program (bulking/cutting, riwayat BB), jalankan **`db/migration_program.sql`** lalu **`db/migration_intensity.sql`** sekali di Supabase SQL Editor. Kedua skrip hanya menambah kolom & tabel (`profiles` + `weight_logs`) tanpa menghapus data lama. Setelah itu aplikasi akan meminta user selesaikan onboarding BB/TB saat login. User lama tanpa intensitas otomatis dianggap **Menengah**.
+> Setelah ranah ulang, user baru mengisi onboarding BB/TB/aktivitas + intensitas latihan; jadwal rest default otomatis jadi Rabu/Sabtu/Minggu.
 
 ## Fitur
 
 - **Autentikasi akun (Supabase Auth)** — daftar & masuk, data tersimpan di server per-pengguna (bisa dipakai dari HP mana pun, tidak hilang saat ganti device/browser). Ada **lupa kata sandi** via email, sesi access/refresh token yang di-refresh otomatis, dan logout yang mencabut sesi server
 - **Dashboard** — ring kalori, ringkasan tidur/latihan/jarak, streak harian, insight otomatis (korelasi tidur vs hari aktif)
-- **Latihan** — **program bulking/cutting otomatis**: onboarding awal wajib isi BB/TB/gender/umur/aktivitas **+ intensitas latihan (Pemula/Menengah/Mahir)** yang memengaruhi jumlah set, saran beban dumbbell, dan istirahat. Aplikasi merekomendasikan program + target BB + durasi ideal + target makan (kalori/makro) otomatis. Update BB wajib tiap 7 hari. Semua gerakan **dumbbell-only**, dan sesi latihan disajikan sebagai **pemutar gerakan**: animasi siluet "template tutor" yang berulang, keterangan set × repetisi + beban + istirahat, tombol **Lanjut**/**Kembali** (tanpa repot mencentang tiap set). Split mingguan (Chest & Triceps → Back & Biceps → Rest → Shoulder → Leg Day → Rest/Cardio) dengan transisi program saat target tercapai. Riwayat tetap tersimpan.
+- **Latihan** — **program bulking/cutting otomatis**: onboarding awal wajib isi BB/TB/gender/umur/aktivitas **+ intensitas latihan (Pemula/Menengah/Mahir)** yang memengaruhi jumlah set, saran beban dumbbell, dan istirahat. Aplikasi merekomendasikan program + target BB + durasi ideal + target makan (kalori/makro) otomatis. Update BB wajib tiap 7 hari. Semua gerakan **dumbbell-only**, dan sesi latihan disajikan sebagai **pemutar gerakan**: animasi siluet "template tutor" yang berulang, keterangan set × repetisi + beban + istirahat, tombol **Lanjut**/**Kembali** (tanpa repot mencentang tiap set). Jadwal menempel nama hari (**Day 1 = Senin**, default latihan Senin/Selasa/Kamis/Jumat, rest Rabu/Sabtu/Minggu) dan user bisa **memindahkan 3 hari rest** lewat editor — urutan latihan (Chest & Triceps → Back & Biceps → Shoulder → Leg Day) ikut menyesuaikan; rest day terakhir otomatis jadi "Rest / Kardio". Ada **alert** bila 1+ latihan terlewat di pekan berjalan. Transisi program saat target tercapai. Riwayat tetap tersimpan.
 - **Lari/Sepeda (ala Strava)** — pelacakan GPS langsung di peta, jarak/waktu/pace/kalori, riwayat rute
 - **Makan** — catatan per waktu makan, kalori & makro, target harian yang bisa diatur
 - **Tidur** — catatan jam tidur-bangun & kualitas, grafik 7 hari

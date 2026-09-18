@@ -500,6 +500,30 @@ body.no-scroll{overflow:hidden;}
 .split-weekday{font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:capitalize;}
 .split-cell strong{font-size:10px; line-height:1.25; min-height:26px; display:flex; align-items:center; justify-content:center; font-weight:700;}
 .split-cell small{font-size:8.5px; color:var(--text-muted);}
+.split-cell.is-cardio{border-style:dashed; background:linear-gradient(155deg, var(--red-soft) 0%, var(--surface) 60%);}
+
+.section-title-row{display:flex; align-items:flex-end; justify-content:space-between; gap:10px;}
+.section-title-row .section-title{margin-bottom:13px;}
+.pill-btn.small{padding:7px 12px; font-size:12px;}
+
+/* Alert latihan terlewat */
+.skip-alert{display:flex; flex-direction:column; gap:6px; background:var(--red-soft); border:1px solid var(--red); border-left:4px solid var(--red); border-radius:var(--r1); padding:12px 14px; font-size:12.5px; line-height:1.55; color:var(--text); margin:12px 0 0;}
+.skip-alert p{margin:0;}
+
+/* Modal atur jadwal */
+.schedule-days{display:flex; flex-direction:column; gap:8px; margin-bottom:6px;}
+.sched-row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg); border:1.5px solid var(--border); border-radius:13px; padding:7px 12px; transition:border-color .15s ease, background .15s ease;}
+.sched-row.is-gym{border-color:var(--red);}
+.sched-name{font-size:14px; font-weight:700; flex:1;}
+.seg-toggle.mini{padding:3px;}
+.seg-toggle.mini .seg-btn{padding:6px 10px; font-size:12px;}
+.schedule-hint{font-size:11.5px; color:var(--text-muted); line-height:1.5; margin:8px 0 12px;}
+.schedule-hint.warn{color:var(--red); font-weight:600;}
+.schedule-preview{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; margin-bottom:16px;}
+.sched-pv{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:7px 3px; text-align:center; font-size:8.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;}
+.sched-pv b{font-size:7.5px; line-height:1.2; font-weight:700;}
+.sched-pv.gym{border-color:var(--red); color:var(--text); background:var(--red-soft);}
+.sched-pv.cardio{border-style:dashed; border-color:var(--red); color:var(--red);}
 
 /* Tracker set aktif */
 .ex-track-info{display:flex; flex-direction:column; gap:2px; min-width:0; flex:1;}

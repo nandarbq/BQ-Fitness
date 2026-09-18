@@ -129,6 +129,11 @@ const API = (() => {
     setUser(data.user);
     return data;
   }
+  async function saveSchedule(days) {
+    const data = await request('PUT', '/program/schedule', { days });
+    setUser(data.user);
+    return data;
+  }
 
   // ---- workouts ----
   async function getWorkouts() { return (await request('GET', '/workouts')).workouts; }
@@ -165,7 +170,7 @@ const API = (() => {
   return {
     isAuthed, getUser, register, login, fetchMe, logout, saveProfile, setUser,
     resetPassword, updatePassword,
-    getProgram, onboard, updateWeight, switchProgram,
+    getProgram, onboard, updateWeight, switchProgram, saveSchedule,
     getWorkouts, addWorkout, deleteWorkout,
     getActivities, addActivity, deleteActivity,
     getFoodLogs, addFoodLog, deleteFoodLog, getFoodGoal, saveFoodGoal,

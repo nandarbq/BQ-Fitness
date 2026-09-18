@@ -8,6 +8,7 @@ create table if not exists public.profiles (
   age            integer default null,
   activity_level integer default null,
   intensity     text        default null,
+  rest_days     text        default '3,6,7',
   program        text default null,
   program_start  date default null,
   start_weight   real default null,

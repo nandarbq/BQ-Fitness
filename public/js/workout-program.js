@@ -1,20 +1,32 @@
 /* Katalog latihan statis untuk program bulking/cutting.
- * Split mingguan:
- *   Day 1 Chest & Triceps · Day 2 Back & Biceps · Day 3 Rest
- *   Day 4 Shoulder · Day 5 Leg Day · Day 6 & 7 Rest/Cardio
- * Semua gerakan hanya memakai DUMBBELL (satu pasang dumbbell, bebasis per tangan).
+ * Jadwal mingguan menempel nama hari (Senin=1 … Minggu=7):
+ *   default latihan Senin/Selasa/Kamis/Jumat, rest Rabu/Sabtu/Minggu.
+ * User bisa memindahkan 3 hari rest -> rutinitas latihan auto menyesuaikan.
+ * Semua gerakan hanya memakai DUMBBELL (satu pasang dumbbell, beban per tangan).
  * Variasi:
  *   - program bulking/cutting  -> menentukan repetisi (jml set dasar)
  *   - intensitas pemula/menengah/mahir -> menggeser jumlah set, rentang beban, istirahat */
 
-const WORKOUT_SPLIT = [
-  { day: 1, label: 'Chest & Triceps', slug: 'chest_triceps', type: 'gym', goal: 'Dada & trisep' },
-  { day: 2, label: 'Back & Biceps', slug: 'back_biceps', type: 'gym', goal: 'Punggung & bisep' },
-  { day: 3, label: 'Rest', slug: 'rest', type: 'rest', goal: 'Pemulihan otot' },
-  { day: 4, label: 'Shoulder', slug: 'shoulder', type: 'gym', goal: 'Bahu' },
-  { day: 5, label: 'Leg Day', slug: 'leg_day', type: 'gym', goal: 'Kaki' },
-  { day: 6, label: 'Rest / Cardio', slug: 'cardio', type: 'cardio', goal: 'Aktif ringan' },
-  { day: 7, label: 'Rest / Cardio', slug: 'cardio', type: 'cardio', goal: 'Aktif ringan' }
+const WEEKDAYS = [
+  { num: 1, long: 'Senin', short: 'Sen' },
+  { num: 2, long: 'Selasa', short: 'Sel' },
+  { num: 3, long: 'Rabu', short: 'Rab' },
+  { num: 4, long: 'Kamis', short: 'Kam' },
+  { num: 5, long: 'Jumat', short: 'Jum' },
+  { num: 6, long: 'Sabtu', short: 'Sab' },
+  { num: 7, long: 'Minggu', short: 'Min' }
+];
+
+const DEFAULT_REST_DAYS = [3, 6, 7];
+
+/* Urutan latihan mengikuti urutan hari latihan dalam sepekan:
+ * latihan ke-1 = Chest & Triceps, ke-2 = Back & Biceps,
+ * ke-3 = Shoulder, ke-4 = Leg Day. */
+const ROUTINE_ORDER = [
+  { order: 1, label: 'Chest & Triceps', slug: 'chest_triceps', goal: 'Dada & trisep', libDay: 1 },
+  { order: 2, label: 'Back & Biceps', slug: 'back_biceps', goal: 'Punggung & bisep', libDay: 2 },
+  { order: 3, label: 'Shoulder', slug: 'shoulder', goal: 'Bahu', libDay: 4 },
+  { order: 4, label: 'Leg Day', slug: 'leg_day', goal: 'Kaki', libDay: 5 }
 ];
 
 const INTENSITY_LEVELS = {
@@ -219,13 +231,74 @@ function programVariant(program) {
   return program === 'cutting' ? 'cut' : 'bulk';
 }
 
-function getSplit() {
-  return WORKOUT_SPLIT;
+function parseRestDays(str) {
+  if (Array.isArray(str)) str = str.join(',');
+  const arr = String(str || '')
+    .split(',')
+    .map(s => parseInt(s, 10))
+    .filter(n => !Number.isNaN(n) && n >= 1 && n <= 7);
+  return arr.length ? [...new Set(arr)].sort((a, b) => a - b) : DEFAULT_REST_DAYS.slice();
 }
 
-function getTodaySplit(daysSinceStart) {
-  const idx = ((Math.max(0, daysSinceStart) % 7) + 7) % 7; // 0..6
-  return WORKOUT_SPLIT[idx];
+function weekdayName(num) {
+  return WEEKDAYS.find(d => d.num === num) || WEEKDAYS[6];
+}
+
+/* ISO -> nomor hari Senin=1 … Minggu=7 */
+function weekdayNumber(iso) {
+  const js = new Date(iso + 'T00:00:00').getDay(); // 0=Minggu … 6=Sabtu
+  return js === 0 ? 7 : js;
+}
+
+function toISO(d) {
+  const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return new Date(utc).toISOString().slice(0, 10);
+}
+
+function mondayOf(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return toISO(d);
+}
+
+function addDaysISO(iso, n) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return toISO(d);
+}
+
+/* Jadwal 7 hari (Senin..Minggu). Setiap sel:
+ * { num, long, short, date, kind, order, label, slug, goal, libDay }
+ * - kind 'gym'  : hari latihan, rutinitas mengikuti ROUTINE_ORDER berurutan.
+ * - kind 'cardio': rest day paling akhir urutan (satu-satunya label Rest / Kardio).
+ * - kind 'rest' : 2 rest day lainnya. */
+function buildWeekSchedule(restDays, iso) {
+  const rest = parseRestDays(restDays);
+  const monday = mondayOf(iso || new Date().toISOString().slice(0, 10));
+  const gym = [];
+  for (let num = 1; num <= 7; num++) if (!rest.includes(num)) gym.push(num);
+  const cardioDay = Math.max(...rest);
+  const routineMap = {};
+  gym.forEach((num, i) => { routineMap[num] = ROUTINE_ORDER[i % ROUTINE_ORDER.length]; });
+  return WEEKDAYS.map(w => {
+    const date = addDaysISO(monday, w.num - 1);
+    const r = routineMap[w.num];
+    if (r) return { ...w, date, kind: 'gym', order: r.order, label: r.label, slug: r.slug, goal: r.goal, libDay: r.libDay };
+    const cardio = w.num === cardioDay;
+    return {
+      ...w, date, kind: cardio ? 'cardio' : 'rest', order: null,
+      label: cardio ? 'Rest / Kardio' : 'Rest',
+      slug: cardio ? 'cardio' : 'rest',
+      goal: cardio ? 'Aktif ringan' : 'Pemulihan otot',
+      libDay: null
+    };
+  });
+}
+
+/* Sesi sebuah hari (default: hari ini) dengan jadwal user. */
+function getTodaySession(restDays, iso) {
+  const day = weekdayNumber(iso || new Date().toISOString().slice(0, 10));
+  return buildWeekSchedule(restDays, iso).find(c => c.num === day) || null;
 }
 
 function intensityLevel(intensity) {

@@ -4,6 +4,7 @@ const WORKOUT = (() => {
   let cache = [];
   let status = null;        // hasil GET /program
   let goals = null;
+  let scheduleRest = [];    // state editor jadwal (hari rest yang sedang diedit)
 
   function programStatus() {
     return status || { needsProgram: true, program: null };
@@ -30,12 +31,14 @@ const WORKOUT = (() => {
 
   function renderAll() {
     renderProgramCard();
+    renderSkipAlert();
     renderSplitWeek();
     renderToday();
     renderHistory();
   }
 
   function init() {
+    bindScheduleEditor();
     return refresh();
   }
 
@@ -91,66 +94,96 @@ const WORKOUT = (() => {
     if (transBtn) transBtn.addEventListener('click', () => ONBOARDING.showTransition(p));
   }
 
-  /* ================= Weekly split ================= */
-  function splitStartDate() {
+  function restDays() {
     const st = status;
-    return (st && st.program && st.program.programStart) ? st.program.programStart : null;
+    return (st && st.program && st.program.restDays) || DEFAULT_REST_DAYS;
   }
 
+  /* ================= Alert latihan terlewat ================= */
+  function renderSkipAlert() {
+    const box = document.getElementById('skipAlert');
+    const st = status;
+    if (!st || !st.program) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    const todayISO = API.todayISO();
+    const worked = new Set(cache.filter(w => w.date).map(w => w.date));
+    const week = buildWeekSchedule(restDays(), todayISO);
+    const missed = week.filter(c => c.kind === 'gym' && c.date < todayISO && !worked.has(c.date));
+
+    const lastMon = addDaysISO(mondayOf(todayISO), -7);
+    const lastSun = addDaysISO(lastMon, 6);
+    const lastDone = cache.some(w => w.date >= lastMon && w.date <= lastSun);
+    const lastHasGym = buildWeekSchedule(restDays(), lastMon).some(c => c.kind === 'gym');
+
+    const parts = [];
+    if (missed.length) {
+      const list = missed.map(c => `<b>${c.long} · ${c.label}</b>`).join(', ');
+      parts.push(`Kamu melewatkan <b>${missed.length} latihan</b> minggu ini: ${list}. Tetap mulai jadwal berikutnya ya!`);
+    }
+    if (!missed.length && lastHasGym && !lastDone) {
+      parts.push('Pekan lalu tidak ada latihan tercatat. Semangat mulai lagi pekan ini!');
+    }
+    if (!parts.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    box.style.display = 'block';
+    box.innerHTML = `<div class="skip-alert">${parts.map(p => `<p>${p}</p>`).join('')}</div>`;
+  }
+
+  /* ================= Weekly split ================= */
   function renderSplitWeek() {
     const box = document.getElementById('splitWeek');
-    box.innerHTML = '';
-    const start = splitStartDate();
-    if (!start) {
+    const st = status;
+    if (!st || !st.program) {
       box.innerHTML = '<p class="empty-note">Aktifkan program dulu untuk melihat pelan mingguan.</p>';
       return;
     }
+    box.innerHTML = '';
     const todayISO = API.todayISO();
-    WORKOUT_SPLIT.forEach((s, i) => {
-      const date = addDays(start, i);
-      const wk = new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short' });
+    buildWeekSchedule(restDays(), todayISO).forEach(c => {
+      const chipDay = c.kind === 'gym' ? `HARI ${c.order}` : 'REST';
       const cell = document.createElement('div');
-      cell.className = 'split-cell' + (date === todayISO ? ' is-today' : '');
+      cell.className = 'split-cell' + (c.date === todayISO ? ' is-today' : '') + (c.kind === 'cardio' ? ' is-cardio' : '');
       cell.innerHTML = `
-        <span class="split-day">HARI ${s.day}</span>
-        <span class="split-weekday">${wk}</span>
-        <strong>${eh(s.label)}</strong>
-        <small>${eh(s.goal)}</small>`;
-      cell.addEventListener('click', () => renderToday(s.day, { previewMode: true }));
+        <span class="split-day">${chipDay}</span>
+        <span class="split-weekday">${c.short}</span>
+        <strong>${eh(c.label)}</strong>
+        <small>${eh(c.goal)}</small>`;
+      cell.addEventListener('click', () => renderToday(c.num, { previewMode: true }));
       box.appendChild(cell);
     });
   }
 
   /* ================= Today's session ================= */
-  function todaySplitDay() {
-    const st = status;
-    if (!st || !st.program || !st.program.programStart) return null;
-    return getTodaySplit(daysBetween(st.program.programStart, API.todayISO()));
-  }
-
-  function renderToday(viewDay, opts) {
+  function renderToday(viewNum, opts) {
     const box = document.getElementById('todaySessionCard');
     const st = status;
     if (!st || !st.program) {
       box.innerHTML = '<p class="empty-note">Aktifkan program dulu — nanti ada porsi latihan otomatis sesuai hari.</p>';
       return;
     }
-    const day = viewDay || (todaySplitDay() || {}).day || 1;
-    const split = WORKOUT_SPLIT.find(s => s.day === day) || WORKOUT_SPLIT[0];
+    const todayISO = API.todayISO();
+    const week = buildWeekSchedule(restDays(), todayISO);
+    const isToday = !viewNum;
+    const cell = viewNum ? (week.find(c => c.num === viewNum) || getTodaySession(restDays(), todayISO)) : getTodaySession(restDays(), todayISO);
+    if (!cell) {
+      box.innerHTML = '<p class="empty-note">Aktifkan program dulu — nanti ada porsi latihan otomatis sesuai hari.</p>';
+      return;
+    }
     const program = st.program.program;
     const intensity = st.program.intensity;
     const lvl = intensityLevel(intensity);
+    const chipDay = cell.kind === 'gym' ? `HARI ${cell.order}` : 'REST';
 
-    if (split.type === 'rest') {
+    if (cell.kind === 'rest') {
       box.innerHTML = `
-        <div class="session-head"><span class="day-chip">HARI ${split.day}</span><div><strong>${eh(split.label)}</strong><small>${eh(split.goal)}</small></div></div>
+        <div class="session-head"><span class="day-chip">${chipDay}</span><div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${isToday ? ' · Hari ini' : ''}</small></div></div>
         <p class="rest-text">Hari pemulihan — hasil latihan justru terbentuk saat otot beristirahat. Cukup aktif ringan & jaga makan.
           ${goals ? `Target kalori hari ini <b>${Math.round(goals.cal)} kkal</b> tetap berjalan untuk program ${program}.` : ''}</p>`;
       return;
     }
-    if (split.type === 'cardio') {
+    if (cell.kind === 'cardio') {
       box.innerHTML = `
-        <div class="session-head"><span class="day-chip">HARI ${split.day}</span><div><strong>${eh(split.label)}</strong><small>${eh(split.goal)}</small></div></div>
+        <div class="session-head"><span class="day-chip">${chipDay}</span><div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${isToday ? ' · Hari ini' : ''}</small></div></div>
         <p class="rest-text">${eh(getCardioSuggestion(program))}</p>
         <button id="startCardioBtn" class="cta-btn"><svg class="ic"><use href="#i-activity"/></svg> Mulai Kardio Ringan</button>`;
       const btn = document.getElementById('startCardioBtn');
@@ -158,12 +191,12 @@ const WORKOUT = (() => {
       return;
     }
 
-    const routine = getDayRoutine(split.day, program, intensity);
-    const todayMark = (!viewDay || viewDay === (todaySplitDay() || {}).day) ? ' · Hari ini' : '';
+    const routine = getDayRoutine(cell.libDay, program, intensity);
+    const todayMark = isToday ? ' · Hari ini' : '';
     box.innerHTML = `
       <div class="session-head">
-        <span class="day-chip">HARI ${split.day}</span>
-        <div><strong>${eh(split.label)}</strong><small>${eh(split.goal)}${todayMark}</small></div>
+        <span class="day-chip">${chipDay}</span>
+        <div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${todayMark}</small></div>
       </div>
       <p class="rest-text">${eh(lvl.weightNote)} · ${eh(lvl.rest)}</p>
       <ul class="routine-list">
@@ -171,14 +204,108 @@ const WORKOUT = (() => {
       </ul>
       <button id="startTodayBtn" class="cta-btn"><svg class="ic"><use href="#i-play"/></svg> Mulai Latihan Ini</button>`;
 
-    document.getElementById('startTodayBtn').addEventListener('click', () => startSession(split, routine));
+    document.getElementById('startTodayBtn').addEventListener('click', () => startSession(cell, routine));
+  }
+
+  /* ================= Editor jadwal (pindah hari rest) ================= */
+  function bindScheduleEditor() {
+    const openBtn = document.getElementById('openScheduleBtn');
+    if (openBtn) openBtn.addEventListener('click', openScheduleModal);
+    const closeBtn = document.getElementById('closeSchedule');
+    if (closeBtn) closeBtn.addEventListener('click', () => NAV.closeModal('scheduleModal'));
+    const saveBtn = document.getElementById('saveScheduleBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveScheduleChanges);
+  }
+
+  function openScheduleModal() {
+    const st = status;
+    if (!st || !st.program) return;
+    scheduleRest = restDays().slice();
+    renderScheduleRows();
+    NAV.openModal('scheduleModal');
+  }
+
+  function scheduleHintText() {
+    const n = scheduleRest.length;
+    return `Rest terpilih <b>${n}/3</b> hari. Satu hari rest paling akhir pekan otomatis jadi <b>Rest / Kardio</b>.`;
+  }
+
+  function flashHint(message) {
+    const hint = document.getElementById('scheduleHint');
+    hint.innerHTML = message;
+    hint.classList.add('warn');
+    clearTimeout(flashHint._t);
+    flashHint._t = setTimeout(() => { hint.innerHTML = scheduleHintText(); hint.classList.remove('warn'); }, 1800);
+  }
+
+  function renderScheduleRows() {
+    const wrap = document.getElementById('scheduleDays');
+    wrap.innerHTML = '';
+    WEEKDAYS.forEach(d => {
+      const isRest = scheduleRest.includes(d.num);
+      const row = document.createElement('div');
+      row.className = 'sched-row' + (isRest ? ' is-rest' : ' is-gym');
+      row.innerHTML = `
+        <span class="sched-name">${d.long}</span>
+        <div class="seg-toggle mini">
+          <button class="seg-btn ${isRest ? '' : 'active'}" data-role="gym"><svg class="ic"><use href="#i-gym"/></svg> Latihan</button>
+          <button class="seg-btn ${isRest ? 'active' : ''}" data-role="rest">Rest</button>
+        </div>`;
+      row.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => toggleScheduleDay(d.num, btn.dataset.role)));
+      wrap.appendChild(row);
+    });
+    const hint = document.getElementById('scheduleHint');
+    hint.innerHTML = scheduleHintText();
+    hint.classList.remove('warn');
+    renderSchedulePreview();
+  }
+
+  function toggleScheduleDay(num, role) {
+    const isRestNow = scheduleRest.includes(num);
+    const wantRest = role === 'rest';
+    if (wantRest === isRestNow) return;
+    if (wantRest && scheduleRest.length >= 3) {
+      flashHint('Maksimal <b>3 hari rest</b> — ubah hari yang terlanjur rest jadi Latihan dulu.');
+      return;
+    }
+    scheduleRest = wantRest
+      ? [...scheduleRest, num].sort((a, b) => a - b)
+      : scheduleRest.filter(n => n !== num);
+    renderScheduleRows();
+  }
+
+  function renderSchedulePreview() {
+    const box = document.getElementById('schedulePreview');
+    if (!box) return;
+    const week = buildWeekSchedule(scheduleRest, API.todayISO());
+    box.innerHTML = week.map(c =>
+      `<div class="sched-pv ${c.kind}"><span>${c.short}</span><b>${c.kind === 'gym' ? `HARI ${c.order} · ${c.label}` : c.label}</b></div>`).join('');
+  }
+
+  async function saveScheduleChanges() {
+    if (scheduleRest.length !== 3) {
+      flashHint('Pilih <b>3 hari rest</b> dulu sebelum menyimpan.');
+      return;
+    }
+    const btn = document.getElementById('saveScheduleBtn');
+    btn.disabled = true;
+    try {
+      await API.saveSchedule(scheduleRest);
+      NAV.closeModal('scheduleModal');
+      await refresh();
+      window.dispatchEvent(new CustomEvent('bq:dataChanged'));
+    } catch (e) {
+      alert('Gagal menyimpan jadwal: ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   /* ================= Player sesi aktif ================= */
-  function startSession(split, routine) {
+  function startSession(cell, routine) {
     if (active) return;
     active = {
-      name: `Day ${split.day} · ${split.label}`,
+      name: `${cell.label} · ${cell.long}`,
       startedAt: Date.now(),
       idx: 0,
       exercises: routine.map(r => ({ ...r, done: false }))
@@ -316,16 +443,19 @@ const WORKOUT = (() => {
   }
   function fmtKg(v) { return v ? (Math.round(v * 10) / 10).toFixed(1) + ' kg' : '—'; }
 
-  function addDays(iso, n) {
+  function addDaysISO(iso, n) {
     const d = new Date(iso + 'T00:00:00');
-    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + n);
+    d.setDate(d.getDate() + n);
+    return toISO(d);
+  }
+  function toISO(d) {
+    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
     return new Date(utc).toISOString().slice(0, 10);
   }
-  function daysBetween(startISO, endISO) {
-    const s = new Date(startISO + 'T00:00:00');
-    const e = new Date(endISO + 'T00:00:00');
-    return Math.round((Date.UTC(e.getFullYear(), e.getMonth(), e.getDate())
-      - Date.UTC(s.getFullYear(), s.getMonth(), s.getDate())) / 86400000);
+  function mondayOf(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return toISO(d);
   }
 
   return { init, countThisWeek, refresh, getCache: () => cache, programStatus, setProgram };

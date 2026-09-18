@@ -5,6 +5,8 @@ const asyncHandler = require('../middleware/asyncHandler');
 const {
   VALID_GENDERS,
   VALID_PROGRAMS,
+  DEFAULT_REST_DAYS,
+  parseRestDays,
   computeProgram,
   computeStatus,
   computeNutrition
@@ -113,6 +115,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
     age,
     activity_level: act,
     intensity,
+    rest_days: DEFAULT_REST_DAYS.join(','),
     weight,
     height,
     program: result.program,
@@ -151,6 +154,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
       age: profile.age,
       activityLevel: profile.activity_level,
       intensity: profile.intensity,
+      restDays: parseRestDays(profile.rest_days),
       program: profile.program
     },
     ...payload
@@ -181,6 +185,7 @@ router.post('/weight', asyncHandler(async (req, res) => {
       age: profile.age,
       activityLevel: profile.activity_level,
       intensity: profile.intensity,
+      restDays: parseRestDays(profile.rest_days),
       program: profile.program
     },
     ...payload
@@ -262,6 +267,45 @@ router.post('/switch', asyncHandler(async (req, res) => {
       age: updated.age,
       activityLevel: updated.activity_level,
       intensity: updated.intensity,
+      restDays: parseRestDays(updated.rest_days),
+      program: updated.program
+    },
+    ...payload
+  });
+}));
+
+/* ---- Atur jadwal mingguan: user memindahkan 3 hari rest ---- */
+router.put('/schedule', asyncHandler(async (req, res) => {
+  const { days } = req.body || {};
+  if (!Array.isArray(days) || days.length !== 3) {
+    return res.status(400).json({ error: 'Jadwal harus berisi tepat 3 hari rest (Senin=1 … Minggu=7).' });
+  }
+  const rest = [...new Set(days.map(Number))].filter(n => !Number.isNaN(n) && n >= 1 && n <= 7);
+  if (rest.length !== 3) {
+    return res.status(400).json({ error: 'Pilih 3 hari berbeda antara nomor 1 (Senin) sampai 7 (Minggu).' });
+  }
+  rest.sort((a, b) => a - b);
+
+  const { data: updated, error } = await supabase
+    .from('profiles')
+    .update({ rest_days: rest.join(',') })
+    .eq('id', req.userId)
+    .single();
+  if (error) throw error;
+
+  const payload = await loadProgramResponse(req.userId);
+  res.json({
+    user: {
+      id: updated.id,
+      name: updated.name,
+      weight: updated.weight,
+      height: updated.height,
+      sleepTarget: updated.sleep_target,
+      gender: updated.gender,
+      age: updated.age,
+      activityLevel: updated.activity_level,
+      intensity: updated.intensity,
+      restDays: rest,
       program: updated.program
     },
     ...payload

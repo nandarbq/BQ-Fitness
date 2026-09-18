@@ -146,6 +146,12 @@
   <symbol id="i-activity" viewBox="0 0 24 24">
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <line x1="16" y1="2" x2="16" y2="6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="8" y1="2" x2="8" y2="6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <line x1="3" y1="10" x2="21" y2="10" fill="none" stroke="currentColor" stroke-width="2"/>
+  </symbol>
 </svg>
 
 <!-- AUTH SCREEN -->
@@ -314,6 +320,8 @@
         </div>
       </div>
 
+      <div id="skipAlert" class="skip-alert-wrap" style="display:none"></div>
+
       <div id="programCard" class="program-card">
         <p class="empty-note">Memuat program…</p>
       </div>
@@ -323,7 +331,10 @@
         <p class="empty-note">Memuat porsi latihan…</p>
       </div>
 
-      <h2 class="section-title">Pelan Mingguan</h2>
+      <div class="section-title-row">
+        <h2 class="section-title">Pelan Mingguan</h2>
+        <button id="openScheduleBtn" class="pill-btn ghost small"><svg class="ic"><use href="#i-cal"/></svg> Atur Jadwal</button>
+      </div>
       <div id="splitWeek" class="split-week"></div>
 
       <div id="activeWorkoutBox" class="active-box" style="display:none">
@@ -523,6 +534,21 @@
       <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
     </div>
     <button id="saveFoodBtn" class="cta-btn"><svg class="ic"><use href="#i-plus"/></svg> Simpan</button>
+  </div>
+</div>
+
+<!-- SCHEDULE MODAL -->
+<div id="scheduleModal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Atur Jadwal Mingguan</h2>
+      <button id="closeSchedule" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <p class="modal-sub">Geser hari rest-mu sesuai kesibukan. Pasti ada <b>tepat 3 hari rest</b> — urutan latihan (Chest & Triceps → Back & Biceps → Shoulder → Leg Day) menyesuaikan otomatis.</p>
+    <div id="scheduleDays" class="schedule-days"></div>
+    <p id="scheduleHint" class="schedule-hint"></p>
+    <div id="schedulePreview" class="schedule-preview"></div>
+    <button id="saveScheduleBtn" class="cta-btn"><svg class="ic"><use href="#i-cal"/></svg> Simpan Jadwal</button>
   </div>
 </div>
 
