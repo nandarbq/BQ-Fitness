@@ -637,13 +637,14 @@
   </div>
 </div>
 
-<!-- TRANSITION MODAL (target tercapai) -->
-<div id="transitionModal" class="modal-overlay">
+<!-- TRANSITION / EVALUASI MODAL (target tercapai | waktu habis) -->
+<div id="transitionModal" class="modal-overlay" data-no-close="true">
   <div class="modal-sheet">
     <div class="modal-head">
-      <h2>Target Tercapai!</h2>
+      <h2 id="transitionTitle">Target Tercapai!</h2>
       <p class="modal-sub" id="transitionNote">Sekarang waktunya pindah ke fase berikutnya.</p>
     </div>
+    <div id="transitionStats" class="weight-stats"></div>
     <div id="transitionOptions"></div>
     <p id="transitionError" class="auth-error"></p>
     <button id="transitionBackBtn" class="pill-btn ghost">Nanti saja</button>

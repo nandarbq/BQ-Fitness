@@ -217,43 +217,72 @@ const ONBOARDING = (() => {
       await WORKOUT.refresh();
       window.dispatchEvent(new CustomEvent('bq:dataChanged'));
       if (typeof weeklyOnSaved === 'function') weeklyOnSaved();
+      const st = WORKOUT.programStatus();
+      if (st && st.targetReached) showTransition(st, 'reached');
+      else if (st && st.timeUp) showTransition(st, 'timeup');
     } catch (e) {
       err.textContent = e.message;
       btn.disabled = false;
     }
   }
 
-  /* ---- Modal transisi program ---- */
-  function buildTransitionOptions(st) {
+  /* ---- Modal transisi program (target tercapai / waktu habis) ---- */
+  function transitionOption(label, desc, payload) {
+    const box = document.getElementById('transitionOptions');
+    const errEl = document.getElementById('transitionError');
+    const row = document.createElement('div');
+    row.className = 'goal-opt trans-opt';
+    row.innerHTML = `<strong>${eh(label)}</strong><small>${eh(desc)}</small>`;
+    row.addEventListener('click', async () => {
+      errEl.textContent = '';
+      try {
+        await API.switchProgram(payload);
+        hide('transitionModal');
+        await WORKOUT.refresh();
+        window.dispatchEvent(new CustomEvent('bq:dataChanged'));
+      } catch (e) {
+        errEl.textContent = e.message;
+      }
+    });
+    box.appendChild(row);
+  }
+
+  function buildTransitionOptions(st, mode) {
     const box = document.getElementById('transitionOptions');
     box.innerHTML = '';
-    const options = buildNextOptions(st);
-    options.forEach(opt => {
-      const row = document.createElement('div');
-      row.className = 'goal-opt trans-opt';
-      row.innerHTML = `<strong>${eh(PROGRAM_INFO[opt.program].title)}</strong><small>${eh(PROGRAM_INFO[opt.program].desc)}</small>`;
-      row.addEventListener('click', async () => {
-        document.getElementById('transitionError').textContent = '';
-        try {
-          await API.switchProgram({ program: opt.program });
-          hide('transitionModal');
-          await WORKOUT.refresh();
-          window.dispatchEvent(new CustomEvent('bq:dataChanged'));
-        } catch (e) {
-          document.getElementById('transitionError').textContent = e.message;
-        }
-      });
-      box.appendChild(row);
+    const cur = st.currentWeight || st.startWeight || st.targetWeight;
+    const title = (PROGRAM_INFO[st.program] || {}).title || st.program;
+
+    if (mode === 'timeup') {
+      if (st.program === 'bulking' || st.program === 'cutting') {
+        transitionOption(`Perpanjang ${title} (siklus baru)`,
+          `Target & durasi dihitung ulang dari BB sekarang (${kg(cur)}), hitungan minggu mulai dari nol.`,
+          { program: st.program });
+      }
+      transitionOption('Evaluasi ulang',
+        'Program direkomendasikan ulang dari BMI & BB terbaru kamu.',
+        { recalc: true, program: st.program });
+    } else if (st.program === 'bulking' || st.program === 'cutting') {
+      transitionOption(`Lanjut ${title} — target baru`,
+        `Target & durasi dihitung ulang dari BB sekarang (${kg(cur)}) sebagai siklus baru.`,
+        { program: st.program });
+    }
+
+    const nexts = nextProgramOptions(st);
+    if (!nexts.length) return;
+    const div = document.createElement('div');
+    div.className = 'trans-divider';
+    div.textContent = 'atau pindah fase';
+    box.appendChild(div);
+    nexts.forEach(opt => {
+      const info = PROGRAM_INFO[opt.program] || {};
+      transitionOption(info.title || opt.program, info.desc || '', { program: opt.program });
     });
   }
 
-  function buildNextOptions(st) {
-    if (st.program === 'bulking') {
-      return [{ program: 'cutting' }];
-    }
-    if (st.program === 'cutting') {
-      return [{ program: 'maintenance' }, { program: 'bulking' }];
-    }
+  function nextProgramOptions(st) {
+    if (st.program === 'bulking') return [{ program: 'cutting' }];
+    if (st.program === 'cutting') return [{ program: 'maintenance' }, { program: 'bulking' }];
     return [{ program: 'bulking' }, { program: 'cutting' }];
   }
 
@@ -276,7 +305,11 @@ const ONBOARDING = (() => {
       return;
     }
     if (p.targetReached) {
-      showTransition(p);
+      showTransition(p, 'reached');
+      return;
+    }
+    if (p.timeUp) {
+      showTransition(p, 'timeup');
       return;
     }
     showProgramReadyNotice();
@@ -296,15 +329,40 @@ const ONBOARDING = (() => {
     show('weeklyWeightModal');
   }
 
-  function showTransition(p) {
-    const note = p.program === 'bulking'
-      ? `Selamat! Target bulking (${p.targetWeight} kg) sudah tercapai. Waktunya pindah fase.`
-      : (p.program === 'cutting'
-        ? `Selamat! Target cutting (${p.targetWeight} kg) sudah tercapai. Pilih fase berikutnya.`
-        : `Program maintenance kamu bisa ditutup kapan saja. Pilih fase berikutnya.`);
+  function transitionProgress(st) {
+    const cur = st.currentWeight || st.startWeight || st.targetWeight;
+    const start = st.startWeight || cur;
+    const target = st.targetWeight;
+    if (!target || start === target) return null;
+    const ratio = (cur - start) / (target - start);
+    return Math.round(Math.min(100, Math.max(0, ratio * 100)));
+  }
+
+  function transitionStatsHtml(st) {
+    const cur = st.currentWeight || st.startWeight || st.targetWeight;
+    const weeks = st.durationWeeks
+      ? `Minggu ke-${Math.min(st.elapsedWeeks + 1, st.durationWeeks)} dari ${st.durationWeeks}`
+      : 'Program aktif';
+    const pct = transitionProgress(st);
+    return `<div class="w-stat"><span>BB sekarang</span><b>${kg(cur)} → ${kg(st.targetWeight)}</b></div>
+      <div class="w-stat"><span>${st.durationWeeks ? 'Durasi' : 'Status'}</span><b>${weeks}</b></div>
+      ${pct === null ? '' : `<div class="w-stat"><span>Capaian</span><b>${pct}%</b></div>`}`;
+  }
+
+  function showTransition(p, mode) {
+    mode = mode === 'timeup' ? 'timeup' : 'reached';
+    document.getElementById('transitionTitle').textContent =
+      mode === 'timeup' ? 'Waktu Program Habis' : 'Target Tercapai!';
+    const info = PROGRAM_INFO[p.program] || {};
+    const note = mode === 'timeup'
+      ? `Durasi program ${info.title || p.program} (${p.durationWeeks} minggu) sudah habis tapi target ${kg(p.targetWeight)} belum tercapai. Pilih langkah berikutnya.`
+      : (p.program === 'maintenance'
+        ? 'Program maintenance kamu bisa ditutup kapan saja. Pilih fase berikutnya.'
+        : `Selamat! Target ${(info.title || p.program).toLowerCase()} (${kg(p.targetWeight)}) sudah tercapai. Pilih langkah berikutnya.`);
     document.getElementById('transitionNote').textContent = note;
+    document.getElementById('transitionStats').innerHTML = transitionStatsHtml(p);
     document.getElementById('transitionError').textContent = '';
-    buildTransitionOptions(p);
+    buildTransitionOptions(p, mode);
     show('transitionModal');
   }
 
@@ -322,6 +380,7 @@ const ONBOARDING = (() => {
   }
 
   function eh(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function kg(v) { return v ? (Math.round(v * 10) / 10).toFixed(1) + ' kg' : '—'; }
 
   return {
     init,

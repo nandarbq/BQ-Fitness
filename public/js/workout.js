@@ -88,7 +88,9 @@ const WORKOUT = (() => {
     if (p.targetReached) {
       extra = `<button id="progTransitionBtn" class="pill-btn success">Target tercapai! Lanjut program berikutnya</button>`;
     } else if (p.timeUp) {
-      extra = `<p class="program-warn">Waktu program sudah habis tapi target belum tercapai. Perbarui BB & evaluasi target.</p>`;
+      extra = `
+        <p class="program-warn">Waktu program sudah habis tapi target belum tercapai.</p>
+        <button id="progEvaluateBtn" class="pill-btn ghost warn">Evaluasi Target</button>`;
     }
 
     box.innerHTML = `
@@ -111,7 +113,9 @@ const WORKOUT = (() => {
     const openWw = document.getElementById('openWeeklyWeightBtn');
     if (openWw) openWw.addEventListener('click', () => ONBOARDING.showWeekly());
     const transBtn = document.getElementById('progTransitionBtn');
-    if (transBtn) transBtn.addEventListener('click', () => ONBOARDING.showTransition(p));
+    if (transBtn) transBtn.addEventListener('click', () => ONBOARDING.showTransition(p, 'reached'));
+    const evalBtn = document.getElementById('progEvaluateBtn');
+    if (evalBtn) evalBtn.addEventListener('click', () => ONBOARDING.showTransition(p, 'timeup'));
   }
 
   function restDays() {

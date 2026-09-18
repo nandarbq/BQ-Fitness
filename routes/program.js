@@ -192,12 +192,11 @@ router.post('/weight', asyncHandler(async (req, res) => {
   });
 }));
 
-/* ---- Ganti program: hanya boleh saat target tercapai / waktu habis ---- */
+/* ---- Ganti / perpanjang program: hanya boleh saat target tercapai / waktu habis ----
+ * recalc=true  -> pilih program otomatis dari BMI/BB terbaru.
+ * program=sama -> extend: siklus baru dengan target & durasi dihitung dari BB sekarang. */
 router.post('/switch', asyncHandler(async (req, res) => {
-  const { program, goal } = req.body || {};
-  if (!program || !VALID_PROGRAMS.includes(program)) {
-    return res.status(400).json({ error: 'Program tidak valid.' });
-  }
+  const { program, recalc } = req.body || {};
 
   const profile = await getProfile(req.userId);
   const status = computeStatus(profile);
@@ -210,38 +209,40 @@ router.post('/switch', asyncHandler(async (req, res) => {
         'Tetap jalankan program sampai target tercapai ya.'
     });
   }
-  if (program === status.program) {
-    return res.status(400).json({ error: 'Kamu sudah menjalankan program ini.' });
-  }
 
   const weight = profile.weight || profile.start_weight || 0;
+  const ctx = {
+    gender: profile.gender,
+    age: profile.age,
+    weight,
+    height: profile.height || 170,
+    activityLevel: profile.activity_level || 3
+  };
+
+  const targetProgram = recalc
+    ? computeProgram({ ...ctx, goal: status.program === 'cutting' ? 'cutting' : 'bulking' }).program
+    : program;
+  if (!recalc && (!targetProgram || !VALID_PROGRAMS.includes(targetProgram))) {
+    return res.status(400).json({ error: 'Program tidak valid.' });
+  }
+  if (targetProgram === status.program && targetProgram === 'maintenance') {
+    return res.status(400).json({ error: 'Program maintenance tidak perlu diperpanjang.' });
+  }
+
   const update = {
-    program,
+    program: targetProgram,
     program_start: todayISO(),
     start_weight: weight,
     last_weight_date: todayISO()
   };
   let goals;
 
-  if (program === 'maintenance') {
+  if (targetProgram === 'maintenance') {
     update.target_weight = null;
     update.duration_weeks = null;
-    goals = computeNutrition('maintenance', {
-      gender: profile.gender,
-      age: profile.age,
-      weight,
-      height: profile.height || 170,
-      activityLevel: profile.activity_level || 3
-    }).goals;
+    goals = computeNutrition('maintenance', ctx).goals;
   } else {
-    const result = computeProgram({
-      gender: profile.gender,
-      age: profile.age,
-      weight,
-      height: profile.height || 170,
-      activityLevel: profile.activity_level || 3,
-      goal: program === 'cutting' ? 'cutting' : 'bulking'
-    });
+    const result = computeProgram({ ...ctx, goal: targetProgram === 'cutting' ? 'cutting' : 'bulking' });
     update.target_weight = result.targetWeight;
     update.duration_weeks = result.durationWeeks;
     goals = result.goals;
