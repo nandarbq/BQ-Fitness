@@ -1,5 +1,5 @@
 const WORKOUT = (() => {
-  let active = null;        // {name, startedAt, exercises:[{name, sets, reps, doneSets}]}
+  let active = null;        // {name, startedAt, idx, exercises:[{name, anim, cue, sets, reps, weight, rest, done}]}
   let timerInterval = null;
   let cache = [];
   let status = null;        // hasil GET /program
@@ -36,12 +36,12 @@ const WORKOUT = (() => {
   }
 
   function init() {
-    document.getElementById('addExerciseBtn').addEventListener('click', addExercise);
-    document.getElementById('exerciseNameInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') addExercise();
-    });
-    document.getElementById('finishWorkoutBtn').addEventListener('click', finish);
     return refresh();
+  }
+
+  function programIntensity() {
+    const st = status;
+    return (st && st.program && st.program.intensity) || 'menengah';
   }
 
   /* ================= Program card ================= */
@@ -60,6 +60,7 @@ const WORKOUT = (() => {
 
     const p = st.program;
     const info = PROGRAM_INFO[p.program] || {};
+    const lvl = intensityLevel(p.intensity);
     let extra = '';
     if (p.targetReached) {
       extra = `<button id="progTransitionBtn" class="pill-btn success">Target tercapai! Lanjut program berikutnya</button>`;
@@ -72,7 +73,7 @@ const WORKOUT = (() => {
         <span class="program-chip">${eh((p.program || '').toUpperCase())}</span>
         <span class="program-week">${p.durationWeeks ? `Minggu ke-${Math.min(p.elapsedWeeks + 1, p.durationWeeks)} dari ${p.durationWeeks}` : 'Program aktif'}</span>
       </div>
-      <p class="program-title">${eh(info.title || p.program)}<small>${eh(info.tagline || '')}</small></p>
+      <p class="program-title">${eh(info.title || p.program)}<small>${eh(info.tagline || '')} · Intensitas ${eh(lvl.label)}</small></p>
       <div class="progress-track"><div class="progress-fill" style="width:${p.progressPct}%"></div></div>
       <div class="program-stats">
         <div class="p-stat"><span>BB sekarang</span><b>${fmtKg(p.currentWeight)}</b></div>
@@ -104,7 +105,7 @@ const WORKOUT = (() => {
       box.innerHTML = '<p class="empty-note">Aktifkan program dulu untuk melihat pelan mingguan.</p>';
       return;
     }
-    const todayISO = localTodayISO();
+    const todayISO = API.todayISO();
     WORKOUT_SPLIT.forEach((s, i) => {
       const date = addDays(start, i);
       const wk = new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short' });
@@ -124,7 +125,7 @@ const WORKOUT = (() => {
   function todaySplitDay() {
     const st = status;
     if (!st || !st.program || !st.program.programStart) return null;
-    return getTodaySplit(daysBetween(st.program.programStart, localTodayISO()));
+    return getTodaySplit(daysBetween(st.program.programStart, API.todayISO()));
   }
 
   function renderToday(viewDay, opts) {
@@ -137,6 +138,8 @@ const WORKOUT = (() => {
     const day = viewDay || (todaySplitDay() || {}).day || 1;
     const split = WORKOUT_SPLIT.find(s => s.day === day) || WORKOUT_SPLIT[0];
     const program = st.program.program;
+    const intensity = st.program.intensity;
+    const lvl = intensityLevel(intensity);
 
     if (split.type === 'rest') {
       box.innerHTML = `
@@ -155,13 +158,14 @@ const WORKOUT = (() => {
       return;
     }
 
-    const routine = getDayRoutine(split.day, program);
+    const routine = getDayRoutine(split.day, program, intensity);
     const todayMark = (!viewDay || viewDay === (todaySplitDay() || {}).day) ? ' · Hari ini' : '';
     box.innerHTML = `
       <div class="session-head">
         <span class="day-chip">HARI ${split.day}</span>
         <div><strong>${eh(split.label)}</strong><small>${eh(split.goal)}${todayMark}</small></div>
       </div>
+      <p class="rest-text">${eh(lvl.weightNote)} · ${eh(lvl.rest)}</p>
       <ul class="routine-list">
         ${routine.map(r => `<li><span>${eh(r.name)}</span><em>${r.sets} × ${eh(r.reps)}</em></li>`).join('')}
       </ul>
@@ -170,20 +174,21 @@ const WORKOUT = (() => {
     document.getElementById('startTodayBtn').addEventListener('click', () => startSession(split, routine));
   }
 
-  /* ================= Active session ================= */
+  /* ================= Player sesi aktif ================= */
   function startSession(split, routine) {
     if (active) return;
     active = {
       name: `Day ${split.day} · ${split.label}`,
       startedAt: Date.now(),
-      exercises: routine.map(r => ({ name: r.name, sets: r.sets, reps: r.reps, doneSets: 0 }))
+      idx: 0,
+      exercises: routine.map(r => ({ ...r, done: false }))
     };
     document.getElementById('activeWorkoutBox').style.display = 'block';
     document.getElementById('activeWorkoutName').textContent = active.name;
     document.getElementById('activeWorkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    renderExercises();
     timerInterval = setInterval(updateTimer, 1000);
     updateTimer();
+    renderPlayer();
   }
 
   function updateTimer() {
@@ -194,60 +199,52 @@ const WORKOUT = (() => {
     document.getElementById('activeWorkoutTimer').textContent = `${mm}:${ss}`;
   }
 
-  function addExercise() {
-    const input = document.getElementById('exerciseNameInput');
-    const name = input.value.trim();
-    if (!name || !active) return;
-    active.exercises.push({ name, sets: 0, reps: '', doneSets: 0 });
-    input.value = '';
-    renderExercises();
+  function renderPlayer() {
+    const box = document.getElementById('exercisePlayer');
+    const list = active.exercises;
+    const idx = active.idx;
+    const ex = list[idx];
+    const isLast = idx === list.length - 1;
+    const total = list.length;
+
+    const progress = list.map((e, i) =>
+      `<span class="pp-dot ${e.done ? 'done' : ''}${i === idx ? ' here' : ''}"></span>`).join('');
+
+    box.innerHTML = `
+      <div class="player-count"><span>Gerakan ${idx + 1} dari ${total}</span></div>
+      <div class="player-progress">${progress}</div>
+      <div class="demo-wrap">${exerciseDemoSVG(ex.anim)}</div>
+      <h3 class="player-name">${eh(ex.name)}</h3>
+      <p class="player-tag">Ikuti irama pelan, utamakan teknik</p>
+      <div class="player-meta">
+        <span class="pm-chip">${ex.sets} × ${eh(ex.reps)}</span>
+        <span class="pm-chip soft">Beban ${ex.weight[0]}–${ex.weight[1]} kg</span>
+        <span class="pm-chip soft">${eh(ex.rest)}</span>
+      </div>
+      <p class="player-cue">${eh(ex.cue)}</p>
+      <div class="player-nav">
+        <button id="prevExBtn" class="pill-btn ghost" ${idx === 0 ? 'disabled' : ''}><svg class="ic"><use href="#i-arrow"/></svg> Kembali</button>
+        <button id="nextExBtn" class="cta-btn">${isLast ? 'Selesai & Simpan' : 'Lanjut'}</button>
+      </div>
+      <button id="quitSessionBtn" class="player-quit">Selesai lebih awal</button>`;
+
+    const prev = document.getElementById('prevExBtn');
+    if (prev && idx > 0) prev.addEventListener('click', () => { active.idx--; renderPlayer(); });
+    document.getElementById('nextExBtn').addEventListener('click', goNext);
+    document.getElementById('quitSessionBtn').addEventListener('click', finish);
   }
 
-  function clickSet(ex, idx) {
-    const total = ex.sets || 1;
-    if (idx < ex.doneSets) {
-      ex.doneSets = Math.min(idx, total);
-    } else {
-      const tap = idx + 1;
-      ex.doneSets = (ex.doneSets === tap && tap === total) ? total - 1 : Math.min(tap, total);
+  function goNext() {
+    if (!active) return;
+    const list = active.exercises;
+    if (active.idx >= list.length - 1) {
+      list[active.idx].done = true;
+      finish();
+      return;
     }
-    renderExercises();
-  }
-
-  function toggleCustom(ex) {
-    // gerakan bebas tanpa set: cuma centang selesai
-    ex.doneSets = ex.doneSets ? 0 : 1;
-    renderExercises();
-  }
-
-  function renderExercises() {
-    const box = document.getElementById('exerciseList');
-    box.innerHTML = '';
-    active.exercises.forEach((ex, i) => {
-      const row = document.createElement('div');
-      row.className = 'exercise-row';
-      if (ex.sets > 0) {
-        let dots = '';
-        for (let s = 1; s <= ex.sets; s++) {
-          dots += `<button class="set-dot${s <= ex.doneSets ? ' done' : ''}" data-i="${s - 1}">${s}</button>`;
-        }
-        row.innerHTML = `
-          <div class="ex-track-info">
-            <strong>${eh(ex.name)}</strong>
-            <span>${ex.sets} × ${eh(ex.reps)}</span>
-          </div>
-          <div class="set-track">${dots}</div>`;
-        row.querySelectorAll('.set-dot').forEach(btn => {
-          btn.addEventListener('click', () => clickSet(ex, Number(btn.dataset.i)));
-        });
-      } else {
-        row.innerHTML = `
-          <div class="ex-track-info"><strong>${eh(ex.name)}</strong><span>Set bebas</span></div>
-          <button class="set-dot${ex.doneSets ? ' done' : ''}" data-i="0">✓</button>`;
-        row.querySelector('.set-dot').addEventListener('click', () => toggleCustom(ex));
-      }
-      box.appendChild(row);
-    });
+    list[active.idx].done = true;
+    active.idx++;
+    renderPlayer();
   }
 
   async function finish() {
@@ -262,13 +259,13 @@ const WORKOUT = (() => {
         name: ex.name,
         sets: ex.sets || null,
         reps: ex.reps || null,
-        doneSets: ex.doneSets || 0
+        doneSets: ex.done ? (ex.sets || 1) : 0
       }))
     };
 
     active = null;
     document.getElementById('activeWorkoutBox').style.display = 'none';
-    document.getElementById('exerciseList').innerHTML = '';
+    document.getElementById('exercisePlayer').innerHTML = '';
 
     try {
       await API.addWorkout(payload);
@@ -319,10 +316,6 @@ const WORKOUT = (() => {
   }
   function fmtKg(v) { return v ? (Math.round(v * 10) / 10).toFixed(1) + ' kg' : '—'; }
 
-  function localTodayISO() {
-    const d = new Date();
-    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  }
   function addDays(iso, n) {
     const d = new Date(iso + 'T00:00:00');
     const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + n);

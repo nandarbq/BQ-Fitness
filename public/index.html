@@ -115,6 +115,9 @@
   <symbol id="i-chev" viewBox="0 0 24 24">
     <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
+  <symbol id="i-back" viewBox="0 0 24 24">
+    <path d="M19 12H5m0 0 6-6m-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
   <symbol id="i-q1" viewBox="0 0 24 24">
     <rect x="10.5" y="12" width="3" height="8" rx="1.5" fill="currentColor"/>
   </symbol>
@@ -331,12 +334,7 @@
           </div>
           <span id="activeWorkoutTimer" class="mono-timer">00:00</span>
         </div>
-        <div id="exerciseList" class="exercise-list"></div>
-        <div class="row-gap">
-          <input id="exerciseNameInput" placeholder="Tambah latihan sendiri, mis. Bench Press" class="text-input" autocomplete="off">
-          <button id="addExerciseBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-plus"/></svg> Tambah</button>
-        </div>
-        <button id="finishWorkoutBtn" class="cta-btn"><svg class="ic"><use href="#i-stop"/></svg> Selesai & Simpan</button>
+        <div id="exercisePlayer" class="exercise-player"></div>
       </div>
 
       <h2 class="section-title">Riwayat</h2>
@@ -560,6 +558,13 @@
         <button class="goal-opt" data-v="5">Atlet<small>Latihan keras hampir tiap hari</small></button>
       </div>
 
+      <p class="field-label">Intensitas latihanmu?</p>
+      <div class="goal-grid" id="obIntensity">
+        <button class="goal-opt" data-v="pemula">Pemula<small>Baru mulai, utamakan teknik</small></button>
+        <button class="goal-opt active" data-v="menengah">Menengah<small>Sudah rutin latihan beban</small></button>
+        <button class="goal-opt" data-v="mahir">Mahir<small>Terbiasa beban berat</small></button>
+      </div>
+
       <div id="obGoalBox" class="ob-goal-box" style="display:none">
         <p class="field-label">Tujuanmu?</p>
         <div class="row2">
@@ -610,6 +615,7 @@
 <script src="js/icons.js"></script>
 <script src="js/api.js"></script>
 <script src="js/workout-program.js"></script>
+<script src="js/exercise-demo.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/auth-ui.js"></script>

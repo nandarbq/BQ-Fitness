@@ -15,6 +15,7 @@ function publicProfile(row) {
     gender: row.gender,
     age: row.age,
     activityLevel: row.activity_level,
+    intensity: row.intensity,
     program: row.program,
     programStart: row.program_start,
     targetWeight: row.target_weight,

@@ -13,6 +13,8 @@ const {
 const router = express.Router();
 router.use(requireAuth);
 
+const VALID_INTENSITY = ['pemula', 'menengah', 'mahir'];
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 async function getProfile(userId) {
@@ -75,7 +77,7 @@ async function loadProgramResponse(userId) {
 
 /* ---- Onboarding: input BB/TB/dll -> rekomendasi program + target makan ---- */
 router.post('/onboard', asyncHandler(async (req, res) => {
-  const { name, gender, age, weight, height, activityLevel, goal } = req.body || {};
+  const { name, gender, age, weight, height, activityLevel, intensity, goal } = req.body || {};
 
   if (!gender || !VALID_GENDERS.includes(gender)) {
     return res.status(400).json({ error: 'Jenis kelamin wajib diisi (pria/wanita).' });
@@ -93,6 +95,9 @@ router.post('/onboard', asyncHandler(async (req, res) => {
   if (!act || ![1, 2, 3, 4, 5].includes(act)) {
     return res.status(400).json({ error: 'Level aktivitas wajib diisi.' });
   }
+  if (!intensity || !VALID_INTENSITY.includes(intensity)) {
+    return res.status(400).json({ error: 'Intensitas latihan wajib diisi (pemula/menengah/mahir).' });
+  }
 
   const result = computeProgram({
     gender,
@@ -107,6 +112,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
     gender,
     age,
     activity_level: act,
+    intensity,
     weight,
     height,
     program: result.program,
@@ -144,6 +150,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
       gender: profile.gender,
       age: profile.age,
       activityLevel: profile.activity_level,
+      intensity: profile.intensity,
       program: profile.program
     },
     ...payload
@@ -173,6 +180,7 @@ router.post('/weight', asyncHandler(async (req, res) => {
       gender: profile.gender,
       age: profile.age,
       activityLevel: profile.activity_level,
+      intensity: profile.intensity,
       program: profile.program
     },
     ...payload
@@ -253,6 +261,7 @@ router.post('/switch', asyncHandler(async (req, res) => {
       gender: updated.gender,
       age: updated.age,
       activityLevel: updated.activity_level,
+      intensity: updated.intensity,
       program: updated.program
     },
     ...payload

@@ -543,4 +543,85 @@ body.no-scroll{overflow:hidden;}
 
 #transitionOptions{display:flex; flex-direction:column;}
 .trans-opt{width:100%; text-align:left; margin-bottom:10px;}
+
+/* ============ PEMUTAR GERAKAN (sesi aktif) ============ */
+.player-progress{display:flex; gap:6px; margin-bottom:12px;}
+.pp-dot{flex:1; height:5px; border-radius:99px; background:var(--border); transition:background .2s ease;}
+.pp-dot.done{background:var(--red);}
+.pp-dot.here{background:var(--red);}
+.player-count{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.4px; text-transform:uppercase;}
+.demo-wrap{background:linear-gradient(155deg, var(--red-soft) 0%, var(--surface) 52%, var(--surface-2) 100%); border:1px solid var(--border); border-radius:22px; overflow:hidden; padding:18px 10px 10px; margin-bottom:14px;}
+.dm-fig{width:100%; max-width:240px; height:auto; display:block; margin:0 auto; overflow:visible;}
+.dm-fig line,.dm-fig path,.dm-fig circle{fill:none; stroke:var(--text-muted); stroke-width:11; stroke-linecap:round; stroke-linejoin:round;}
+.dm-fig .dm-weight{stroke:var(--red); stroke-width:5; fill:none;}
+.dm-fig rect.dm-weight{fill:var(--red); stroke:var(--red); stroke-width:4;}
+.dm-fig .dm-ground{stroke:var(--border); stroke-width:3; stroke-dasharray:2 7;}
+.dm-fig .dm-cloud{stroke:none; fill:var(--text-muted); opacity:.16;}
+.dm-mvA,.dm-mvB{transform-box:view-box; transform-origin:var(--ox,50%) var(--oy,50%); will-change:transform;}
+@media (prefers-reduced-motion: reduce){
+  .dm-mvA,.dm-mvB{animation:none !important;}
+}
+.dm-curl .dm-mvA{animation:dmCurlA 1.3s ease-in-out infinite alternate;}
+.dm-curl .dm-mvB{animation:dmCurlB 1.3s ease-in-out infinite alternate;}
+@keyframes dmCurlA{from{transform:rotate(6deg);} to{transform:rotate(125deg);}}
+@keyframes dmCurlB{from{transform:rotate(-6deg);} to{transform:rotate(-125deg);}}
+
+.dm-press .dm-mvA{animation:dmPressA 1.9s ease-in-out infinite alternate;}
+.dm-press .dm-mvB{animation:dmPressB 1.9s ease-in-out infinite alternate;}
+@keyframes dmPressA{from{transform:rotate(-6deg);} to{transform:rotate(-132deg);}}
+@keyframes dmPressB{from{transform:rotate(6deg);} to{transform:rotate(132deg);}}
+
+.dm-lateral .dm-mvA{animation:dmLatA 1.7s ease-in-out infinite alternate;}
+.dm-lateral .dm-mvB{animation:dmLatB 1.7s ease-in-out infinite alternate;}
+.dm-rear .dm-mvA{animation:dmLatA 1.8s ease-in-out infinite alternate;}
+.dm-rear .dm-mvB{animation:dmLatB 1.8s ease-in-out infinite alternate;}
+@keyframes dmLatA{from{transform:rotate(4deg);} to{transform:rotate(88deg);}}
+@keyframes dmLatB{from{transform:rotate(-4deg);} to{transform:rotate(-88deg);}}
+
+.dm-shrug .dm-mvA{animation:dmShrug 2.2s ease-in-out infinite alternate;}
+@keyframes dmShrug{from{transform:translateY(0);} to{transform:translateY(-11px);}}
+
+.dm-squat .dm-mvA{animation:dmSquat 2.3s ease-in-out infinite alternate;}
+@keyframes dmSquat{from{transform:translateY(0);} to{transform:translateY(30px);}}
+
+.dm-lunge .dm-mvA{animation:dmSquat 2.5s ease-in-out infinite alternate;}
+
+.dm-calf .dm-mvA{animation:dmCalf 1.5s ease-in-out infinite alternate;}
+@keyframes dmCalf{from{transform:translateY(0);} to{transform:translateY(-12px);}}
+
+.dm-tri .dm-mvA{animation:dmTri 1.9s ease-in-out infinite alternate;}
+@keyframes dmTri{from{transform:rotate(-78deg);} to{transform:rotate(10deg);}}
+
+.dm-kick .dm-mvA{animation:dmKick 1.7s ease-in-out infinite alternate;}
+@keyframes dmKick{from{transform:rotate(-6deg);} to{transform:rotate(-118deg);}}
+
+.dm-row .dm-mvA{animation:dmRow 2s ease-in-out infinite alternate;}
+@keyframes dmRow{from{transform:rotate(-8deg);} to{transform:rotate(-135deg);}}
+
+.dm-rdl .dm-mvA{animation:dmRdl 2.1s ease-in-out infinite alternate;}
+@keyframes dmRdl{from{transform:rotate(-4deg);} to{transform:rotate(40deg);}}
+
+.dm-bench .dm-mvA{animation:dmBenchA 1.9s ease-in-out infinite alternate;}
+.dm-bench .dm-mvB{animation:dmBenchB 1.9s ease-in-out infinite alternate;}
+@keyframes dmBenchA{from{transform:rotate(-36deg);} to{transform:rotate(-6deg);}}
+@keyframes dmBenchB{from{transform:rotate(36deg);} to{transform:rotate(6deg);}}
+
+.dm-fly .dm-mvA{animation:dmFlyA 2s ease-in-out infinite alternate;}
+.dm-fly .dm-mvB{animation:dmFlyB 2s ease-in-out infinite alternate;}
+@keyframes dmFlyA{from{transform:rotate(-10deg);} to{transform:rotate(-90deg);}}
+@keyframes dmFlyB{from{transform:rotate(10deg);} to{transform:rotate(90deg);}}
+
+.dm-pull .dm-mvA{animation:dmPull 2.3s ease-in-out infinite alternate;}
+@keyframes dmPull{from{transform:rotate(-18deg);} to{transform:rotate(88deg);}}
+
+.player-name{font-size:18px; font-weight:800; margin:0 0 2px; text-align:center;}
+.player-tag{text-align:center; font-size:11.5px; color:var(--text-muted); font-weight:500; margin:0 0 12px;}
+.player-meta{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:12px;}
+.pm-chip{background:var(--red-soft); border:1px solid var(--border); color:var(--red); font-weight:700; font-size:12.5px; border-radius:99px; padding:6px 12px; font-family:var(--font-display);}
+.pm-chip.soft{background:var(--surface); color:var(--text-muted);}
+.player-cue{font-size:13.5px; color:var(--text-muted); line-height:1.65; text-align:center; margin:0 0 14px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px;}
+.player-nav{display:flex; gap:10px; align-items:stretch;}
+.player-nav .cta-btn{flex:1.4;}
+.player-nav .pill-btn{flex:1; margin-top:0; display:flex; align-items:center; justify-content:center;}
+.player-quit{display:block; margin:12px auto 0; background:none; border:none; color:var(--text-muted); font-size:12px; font-weight:600; text-decoration:underline; cursor:pointer; padding:6px;}
 #transitionModal .modal-sheet .pill-btn{width:100%;}

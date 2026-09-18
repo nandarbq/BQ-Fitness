@@ -7,6 +7,7 @@ create table if not exists public.profiles (
   gender         text default null,
   age            integer default null,
   activity_level integer default null,
+  intensity     text        default null,
   program        text default null,
   program_start  date default null,
   start_weight   real default null,

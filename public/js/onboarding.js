@@ -2,11 +2,13 @@
 const ONBOARDING = (() => {
   let obGender = 'pria';
   let obActivity = 3;
+  let obIntensity = 'menengah';
   let obGoal = null; // 'bulking' | 'cutting' (untuk BMI normal)
 
   function init() {
     bindGender();
     bindActivity();
+    bindIntensity();
     bindGoal();
     document.getElementById('obPreviewBtn').addEventListener('click', showPreview);
     document.getElementById('obBackBtn').addEventListener('click', () => {
@@ -35,6 +37,17 @@ const ONBOARDING = (() => {
     wrap.querySelectorAll('.goal-opt').forEach(btn => {
       btn.addEventListener('click', () => {
         obActivity = Number(btn.dataset.v);
+        wrap.querySelectorAll('.goal-opt').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+  }
+
+  function bindIntensity() {
+    const wrap = document.getElementById('obIntensity');
+    if (!wrap) return;
+    wrap.querySelectorAll('.goal-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        obIntensity = btn.dataset.v;
         wrap.querySelectorAll('.goal-opt').forEach(b => b.classList.toggle('active', b === btn));
       });
     });
@@ -72,7 +85,7 @@ const ONBOARDING = (() => {
     const age = parseInt(document.getElementById('obAge').value, 10);
     const weight = parseFloat(document.getElementById('obWeight').value);
     const height = parseFloat(document.getElementById('obHeight').value);
-    return { gender: obGender, age, weight, height, activityLevel: obActivity };
+    return { gender: obGender, age, weight, height, activityLevel: obActivity, intensity: obIntensity };
   }
 
   function computePreview() {
@@ -131,6 +144,8 @@ const ONBOARDING = (() => {
     const goalDesc = p.program === 'cutting'
       ? 'menurunkan berat badan'
       : (p.program === 'bulking' ? 'menambah massa otot & berat badan' : 'menjaga bentuk badan');
+    const lvl = INTENSITY_LEVELS[obIntensity] || INTENSITY_LEVELS.menengah;
+    const sample = getDayRoutine(1, p.program, obIntensity)[0];
 
     document.getElementById('obResultCard').innerHTML = `
       <div class="program-head">
@@ -140,6 +155,7 @@ const ONBOARDING = (() => {
       <p class="program-title">${eh(info.title)}<small>${eh(info.tagline)}</small></p>
       <p class="program-desc">${eh(info.desc)}</p>
       <p class="program-why">BMI kamu <b>${(p.bmi / 1).toFixed(1)}</b> (${bmiLabel(p.bmi)}) → direkomendasikan <b>${info.title}</b> untuk ${goalDesc}.</p>
+      <p class="program-why">Intensitas <b>${eh(lvl.label)}</b> · contoh porsi hari ke-1: <b>${eh(sample.name)} — ${sample.sets} × ${eh(sample.reps)}</b>, beban saran ${sample.weight[0]}–${sample.weight[1]} kg.</p>
       <div class="program-stats">
         <div class="p-stat"><span>Target BB</span><b>${p.target} kg</b></div>
         <div class="p-stat"><span>Berat sekarang</span><b>${d.weight} kg</b></div>
@@ -163,6 +179,7 @@ const ONBOARDING = (() => {
         weight: d.weight,
         height: d.height,
         activityLevel: d.activityLevel,
+        intensity: obIntensity,
         goal: obGoal || undefined
       });
       hide('onboardModal');

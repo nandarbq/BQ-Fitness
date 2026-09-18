@@ -2,7 +2,10 @@
  * Split mingguan:
  *   Day 1 Chest & Triceps · Day 2 Back & Biceps · Day 3 Rest
  *   Day 4 Shoulder · Day 5 Leg Day · Day 6 & 7 Rest/Cardio
- * Variasi set & rep: bulking (massal, volume lebih tinggi) vs cutting (moderat). */
+ * Semua gerakan hanya memakai DUMBBELL (satu pasang dumbbell, bebasis per tangan).
+ * Variasi:
+ *   - program bulking/cutting  -> menentukan repetisi (jml set dasar)
+ *   - intensitas pemula/menengah/mahir -> menggeser jumlah set, rentang beban, istirahat */
 
 const WORKOUT_SPLIT = [
   { day: 1, label: 'Chest & Triceps', slug: 'chest_triceps', type: 'gym', goal: 'Dada & trisep' },
@@ -14,45 +17,176 @@ const WORKOUT_SPLIT = [
   { day: 7, label: 'Rest / Cardio', slug: 'cardio', type: 'cardio', goal: 'Aktif ringan' }
 ];
 
+const INTENSITY_LEVELS = {
+  pemula: {
+    label: 'Pemula',
+    desc: 'Baru mulai / belum terbiasa beban',
+    setsAdj: -1,
+    rest: 'Istirahat ± 90 detik',
+    weightNote: 'Mulai beban ringan, utamakan teknik dulu'
+  },
+  menengah: {
+    label: 'Menengah',
+    desc: 'Sudah rutin latihan beban',
+    setsAdj: 0,
+    rest: 'Istirahat 60–90 detik',
+    weightNote: 'Beban sedang, tambah bertahap'
+  },
+  mahir: {
+    label: 'Mahir',
+    desc: 'Terbiasa beban berat & progresif',
+    setsAdj: 1,
+    rest: 'Istirahat ± 60 detik',
+    weightNote: 'Beban berat, fokus progresi'
+  }
+};
+
+/* bobot = kg per satu dumbbell (saran awal, sesuaikan kemampuan) */
 const EXERCISE_LIBRARY = [
   {
     day: 1,
     routine: [
-      { name: 'Barbell Bench Press', bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
-      { name: 'Incline Dumbbell Press', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Cable Fly', bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
-      { name: 'Triceps Rope Pushdown', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Overhead Triceps Extension', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } }
+      {
+        name: 'Dumbbell Bench Press',
+        anim: 'bench',
+        cue: 'Baring telentang, dorong kedua dumbbell ke atas sampai lengan lurus, turunkan pelan ke dada.',
+        base: { bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
+        weight: { pemula: [6, 10], menengah: [10, 16], mahir: [16, 24] }
+      },
+      {
+        name: 'Dumbbell Chest Fly',
+        anim: 'fly',
+        cue: 'Buka kedua lengan selebar dada lalu rapatkan di atas dada seperti memeluk benda besar.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 6], menengah: [6, 10], mahir: [10, 14] }
+      },
+      {
+        name: 'Dumbbell Pullover',
+        anim: 'pullover',
+        cue: 'Luruskan kedua tangan di atas kepala, tarik dumbbell sampai sejajar kepala lalu angkat lewat atas dada.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [8, 12], menengah: [12, 18], mahir: [18, 24] }
+      },
+      {
+        name: 'Overhead Triceps Extension',
+        anim: 'tri',
+        cue: 'Genggam satu dumbbell di atas kepala, tekuk siku ke belakang, lalu luruskan ke atas lagi.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 8], menengah: [8, 12], mahir: [12, 18] }
+      },
+      {
+        name: 'Dumbbell Kickback',
+        anim: 'kickback',
+        cue: 'Condong ke depan, siku menempel sisi tubuh, luruskan lengan ke belakang lalu tekuk lagi.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '15' } },
+        weight: { pemula: [2, 4], menengah: [4, 6], mahir: [6, 10] }
+      }
     ]
   },
   {
     day: 2,
     routine: [
-      { name: 'Deadlift atau Pull-Up', bulk: { sets: 4, reps: '6–8' }, cut: { sets: 3, reps: '8–10' } },
-      { name: 'Barbell Row', bulk: { sets: 3, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
-      { name: 'Lat Pulldown', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Seated Cable Row', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Barbell Curl', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Hammer Curl', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } }
+      {
+        name: 'Dumbbell Row',
+        anim: 'row',
+        cue: 'Condongkan badan, tarik dumbbell ke pinggang dengan siku rapat tubuh, turunkan pelan.',
+        base: { bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
+        weight: { pemula: [8, 12], menengah: [12, 18], mahir: [18, 24] }
+      },
+      {
+        name: 'Dumbbell Romanian Deadlift',
+        anim: 'rdl',
+        cue: 'Jaga punggung lurus, condongkan badan sambil dumbbell meluncur di depan kaki, lalu tegak kembali.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [10, 16], menengah: [16, 24], mahir: [24, 32] }
+      },
+      {
+        name: 'Dumbbell Curl',
+        anim: 'curl',
+        cue: 'Siku menempel tubuh, angkat dumbbell ke bahu tanpa mengayun, turunkan pelan.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 8], menengah: [8, 12], mahir: [12, 18] }
+      },
+      {
+        name: 'Hammer Curl',
+        anim: 'hammer',
+        cue: 'Sama seperti curl tapi genggaman menghadap ke dalam (telapak saling berhadapan).',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 8], menengah: [8, 12], mahir: [12, 18] }
+      }
     ]
   },
   {
     day: 4,
     routine: [
-      { name: 'Overhead Press', bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
-      { name: 'Lateral Raise', bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
-      { name: 'Rear Delt Fly', bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
-      { name: 'Face Pull', bulk: { sets: 3, reps: '15' }, cut: { sets: 3, reps: '15' } }
+      {
+        name: 'Dumbbell Overhead Press',
+        anim: 'press',
+        cue: 'Dorong kedua dumbbell ke atas kepala sampai lengan lurus, turunkan ke samping bahu.',
+        base: { bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
+        weight: { pemula: [6, 10], menengah: [10, 16], mahir: [16, 22] }
+      },
+      {
+        name: 'Dumbbell Lateral Raise',
+        anim: 'lateral',
+        cue: 'Angkat kedua lengan ke samping sampai sejajar bahu, turunkan pelan tanpa tergesa.',
+        base: { bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
+        weight: { pemula: [2, 4], menengah: [4, 6], mahir: [6, 10] }
+      },
+      {
+        name: 'Dumbbell Reverse Fly',
+        anim: 'rearfly',
+        cue: 'Condong ke depan, buka kedua lengan ke samping setinggi bahu, remas punggung atas.',
+        base: { bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
+        weight: { pemula: [2, 4], menengah: [4, 6], mahir: [6, 10] }
+      },
+      {
+        name: 'Dumbbell Shrug',
+        anim: 'shrug',
+        cue: 'Angkat bahu setinggi mungkin ke arah telinga, tahan sebentar, turunkan santai.',
+        base: { bulk: { sets: 4, reps: '12–15' }, cut: { sets: 4, reps: '15' } },
+        weight: { pemula: [10, 16], menengah: [16, 24], mahir: [24, 32] }
+      }
     ]
   },
   {
     day: 5,
     routine: [
-      { name: 'Squat', bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
-      { name: 'Romanian Deadlift', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Leg Press', bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
-      { name: 'Leg Curl', bulk: { sets: 3, reps: '12–15' }, cut: { sets: 3, reps: '15' } },
-      { name: 'Calf Raise', bulk: { sets: 4, reps: '12–15' }, cut: { sets: 4, reps: '15' } }
+      {
+        name: 'Goblet Squat',
+        anim: 'squat',
+        cue: 'Pegang satu dumbbell di depan dada, jongkok sampai paha sejajar lantai, tegak kembali.',
+        base: { bulk: { sets: 4, reps: '8–10' }, cut: { sets: 3, reps: '10–12' } },
+        weight: { pemula: [8, 12], menengah: [12, 20], mahir: [20, 30] }
+      },
+      {
+        name: 'Dumbbell Romanian Deadlift',
+        anim: 'rdl',
+        cue: 'Jaga punggung lurus, condongkan badan sambil dumbbell meluncur di depan kaki, lalu tegak kembali.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [10, 16], menengah: [16, 24], mahir: [24, 32] }
+      },
+      {
+        name: 'Dumbbell Reverse Lunge',
+        anim: 'lunge',
+        cue: 'Melangkah mundur lalu turunkan lutut belakang sampai hampir menyentuh lantai, kembali berdiri.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 8], menengah: [8, 14], mahir: [14, 20] }
+      },
+      {
+        name: 'Bulgarian Split Squat',
+        anim: 'lunge',
+        cue: 'Kaki belakang di atas kursi, turunkan tubuh lurus ke bawah lalu dorong naik memakai kaki depan.',
+        base: { bulk: { sets: 3, reps: '10–12' }, cut: { sets: 3, reps: '12–15' } },
+        weight: { pemula: [4, 8], menengah: [8, 14], mahir: [14, 20] }
+      },
+      {
+        name: 'Standing Calf Raise',
+        anim: 'calf',
+        cue: 'Jinjit setinggi mungkin dengan dumbbell di sisi tubuh, tahan sejenak di atas, turunkan pelan.',
+        base: { bulk: { sets: 4, reps: '12–15' }, cut: { sets: 4, reps: '15' } },
+        weight: { pemula: [8, 12], menengah: [12, 20], mahir: [20, 28] }
+      }
     ]
   }
 ];
@@ -94,15 +228,28 @@ function getTodaySplit(daysSinceStart) {
   return WORKOUT_SPLIT[idx];
 }
 
-function getDayRoutine(day, program) {
+function intensityLevel(intensity) {
+  return INTENSITY_LEVELS[intensity] || INTENSITY_LEVELS.menengah;
+}
+
+/* Gerakan hari tertentu yang sudah menyesuaikan program (reps) & intensitas (set + beban + istirahat). */
+function getDayRoutine(day, program, intensity) {
   const lib = EXERCISE_LIBRARY.find(e => e.day === day);
   if (!lib) return null;
   const variant = programVariant(program);
-  return lib.routine.map(ex => ({
-    name: ex.name,
-    sets: ex[variant].sets,
-    reps: ex[variant].reps
-  }));
+  const level = intensityLevel(intensity);
+  return lib.routine.map(ex => {
+    const base = ex.base[variant];
+    return {
+      name: ex.name,
+      anim: ex.anim,
+      cue: ex.cue,
+      sets: Math.max(2, base.sets + (level.setsAdj || 0)),
+      reps: base.reps,
+      weight: ex.weight[intensity] || ex.weight.menengah || ex.weight.pemula,
+      rest: level.rest
+    };
+  });
 }
 
 function getCardioSuggestion(program) {
