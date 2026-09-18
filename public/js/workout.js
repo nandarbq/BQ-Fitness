@@ -5,6 +5,23 @@ const WORKOUT = (() => {
   let status = null;        // hasil GET /program
   let goals = null;
   let scheduleRest = [];    // state editor jadwal (hari rest yang sedang diedit)
+  const PENDING_KEY = 'bq_pending_workout';
+  let pending = null;       // sesi belum selesai yang bisa dilanjutkan
+  let undo = null;          // latihan terakhir yang dihapus (untuk urungkan)
+  let undoTimer = null;
+
+  function savePending() {
+    if (!active) { pending = null; localStorage.removeItem(PENDING_KEY); }
+    else {
+      pending = JSON.parse(JSON.stringify(active));
+      try { localStorage.setItem(PENDING_KEY, JSON.stringify(pending)); } catch (e) { /* storage penuh */ }
+    }
+  }
+
+  function loadPending() {
+    try { pending = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null'); } catch (e) { pending = null; }
+    return pending;
+  }
 
   function programStatus() {
     return status || { needsProgram: true, program: null };
@@ -32,6 +49,7 @@ const WORKOUT = (() => {
   function renderAll() {
     renderProgramCard();
     renderSkipAlert();
+    renderResumeCard();
     renderSplitWeek();
     renderToday();
     renderHistory();
@@ -39,6 +57,8 @@ const WORKOUT = (() => {
 
   function init() {
     bindScheduleEditor();
+    const undoBtn = document.getElementById('undoBtn');
+    if (undoBtn) undoBtn.addEventListener('click', undoDelete);
     return refresh();
   }
 
@@ -127,6 +147,54 @@ const WORKOUT = (() => {
 
     box.style.display = 'block';
     box.innerHTML = `<div class="skip-alert">${parts.map(p => `<p>${p}</p>`).join('')}</div>`;
+  }
+
+  /* ================= Sesi belum selesai -> bisa dilanjut ================= */
+  function renderResumeCard() {
+    const box = document.getElementById('resumeBanner');
+    if (active || !loadPending()) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    const p = pending;
+    if (!p || !p.exercises || !p.exercises.length) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      return;
+    }
+    const done = p.exercises.filter(e => e.done).length;
+    const current = Math.min(p.idx + 1, p.exercises.length);
+    box.style.display = 'block';
+    box.innerHTML = `
+      <div class="resume-card">
+        <div class="resume-info">
+          <strong>${eh(p.name)} belum selesai</strong>
+          <span>Berhenti di gerakan ${current} dari ${p.exercises.length} · ${done}/${p.exercises.length} gerakan selesai</span>
+        </div>
+        <div class="resume-actions">
+          <button id="resumeBtn" class="pill-btn"><svg class="ic"><use href="#i-play"/></svg> Lanjutkan</button>
+          <button id="discardResumeBtn" class="pill-btn ghost">Buang</button>
+        </div>
+      </div>`;
+    document.getElementById('resumeBtn').addEventListener('click', resumeSession);
+    document.getElementById('discardResumeBtn').addEventListener('click', () => {
+      localStorage.removeItem(PENDING_KEY);
+      pending = null;
+      renderResumeCard();
+    });
+  }
+
+  function resumeSession() {
+    if (active || !loadPending()) { renderResumeCard(); return; }
+    active = pending;
+    document.getElementById('activeWorkoutBox').style.display = 'block';
+    document.getElementById('activeWorkoutName').textContent = active.name;
+    document.getElementById('activeWorkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+    renderPlayer();
+    renderResumeCard();
   }
 
   /* ================= Weekly split ================= */
@@ -313,6 +381,7 @@ const WORKOUT = (() => {
     document.getElementById('activeWorkoutBox').style.display = 'block';
     document.getElementById('activeWorkoutName').textContent = active.name;
     document.getElementById('activeWorkoutBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    savePending();
     timerInterval = setInterval(updateTimer, 1000);
     updateTimer();
     renderPlayer();
@@ -356,9 +425,20 @@ const WORKOUT = (() => {
       <button id="quitSessionBtn" class="player-quit">Selesai lebih awal</button>`;
 
     const prev = document.getElementById('prevExBtn');
-    if (prev && idx > 0) prev.addEventListener('click', () => { active.idx--; renderPlayer(); });
+    if (prev && idx > 0) prev.addEventListener('click', () => { active.idx--; savePending(); renderPlayer(); });
     document.getElementById('nextExBtn').addEventListener('click', goNext);
-    document.getElementById('quitSessionBtn').addEventListener('click', finish);
+    document.getElementById('quitSessionBtn').addEventListener('click', quitEarly);
+  }
+
+  function quitEarly() {
+    if (!active) return;
+    const allDone = active.exercises.every(e => e.done);
+    if (allDone) { finish(); return; }
+    clearInterval(timerInterval);
+    savePending(); // simpan sesi agar bisa dilanjutkan nanti
+    document.getElementById('activeWorkoutBox').style.display = 'none';
+    document.getElementById('exercisePlayer').innerHTML = '';
+    renderResumeCard();
   }
 
   function goNext() {
@@ -366,11 +446,13 @@ const WORKOUT = (() => {
     const list = active.exercises;
     if (active.idx >= list.length - 1) {
       list[active.idx].done = true;
+      savePending();
       finish();
       return;
     }
     list[active.idx].done = true;
     active.idx++;
+    savePending();
     renderPlayer();
   }
 
@@ -389,16 +471,22 @@ const WORKOUT = (() => {
         doneSets: ex.done ? (ex.sets || 1) : 0
       }))
     };
+    const snap = JSON.parse(JSON.stringify(active));
 
     active = null;
+    pending = null;
     document.getElementById('activeWorkoutBox').style.display = 'none';
     document.getElementById('exercisePlayer').innerHTML = '';
 
     try {
       await API.addWorkout(payload);
+      localStorage.removeItem(PENDING_KEY);
       await refresh();
       window.dispatchEvent(new CustomEvent('bq:dataChanged'));
     } catch (e) {
+      pending = snap; // gagal simpan -> simpan sesi agar bisa dilanjutkan lagi
+      try { localStorage.setItem(PENDING_KEY, JSON.stringify(snap)); } catch (e2) { /* ignore */ }
+      renderResumeCard();
       alert('Gagal menyimpan sesi latihan: ' + e.message);
     }
   }
@@ -419,13 +507,62 @@ const WORKOUT = (() => {
       const el = document.createElement('div');
       el.className = 'history-item';
       el.innerHTML = `
+        <button class="h-del" data-id="${w.id}" aria-label="Hapus riwayat"><svg class="ic"><use href="#i-trash"/></svg></button>
         <div class="h-left">
           <strong>${escapeHtml(w.name)}</strong>
           <span>${formatDate(w.date)} · ${sub}</span>
         </div>
         <div class="h-right">${w.durationMin}<small>menit</small></div>`;
+      const del = el.querySelector('.h-del');
+      del.addEventListener('click', () => removeWorkout(w.id, w));
       box.appendChild(el);
     });
+  }
+
+  async function removeWorkout(id, item) {
+    try {
+      await API.deleteWorkout(id);
+      cache = cache.filter(x => x.id !== id);
+      renderHistory();
+      showUndoToast(item);
+      window.dispatchEvent(new CustomEvent('bq:dataChanged'));
+    } catch (e) {
+      alert('Gagal menghapus latihan: ' + e.message);
+    }
+  }
+
+  function showUndoToast(item) {
+    undo = item;
+    const toast = document.getElementById('undoToast');
+    toast.querySelector('.ut-text').textContent = 'Latihan dihapus';
+    toast.style.display = 'flex';
+    toast.classList.remove('fade-out');
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(hideUndoToast, 8000);
+  }
+
+  function hideUndoToast() {
+    undo = null;
+    const toast = document.getElementById('undoToast');
+    toast.style.display = 'none';
+  }
+
+  async function undoDelete() {
+    if (!undo) return;
+    const item = undo;
+    hideUndoToast();
+    try {
+      await API.addWorkout({
+        name: item.name,
+        date: item.date,
+        durationMin: item.durationMin,
+        exercises: item.exercises || []
+      });
+      await refresh();
+      window.dispatchEvent(new CustomEvent('bq:dataChanged'));
+    } catch (e) {
+      alert('Gagal mengurungkan penghapusan: ' + e.message);
+    }
   }
 
   function countThisWeek() {

@@ -275,13 +275,47 @@ label{display:block; font-size:12.5px; font-weight:600; color:var(--text-muted);
   padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px;
   box-shadow:var(--shadow-sm);
 }
-.history-item .h-left{min-width:0;}
+.history-item .h-left{min-width:0; flex:1;}
 .history-item .h-left strong{display:flex; align-items:center; gap:8px; font-size:14.5px; font-weight:700;}
 .history-item .h-left strong .ic{width:17px;height:17px; color:var(--text-muted);}
 .history-item .h-left span{font-size:12px; color:var(--text-muted);}
 .history-item .h-right{text-align:right; font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--red); flex-shrink:0;}
 .history-item .h-right small{display:block; font-family:var(--font-body); font-weight:500; color:var(--text-muted); font-size:11px;}
 .empty-note{color:var(--text-muted); font-size:13px; text-align:center; padding:20px 0;}
+
+/* Tombol hapus riwayat + toast urungkan */
+.history-item .h-del{
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  width:32px; height:32px; border-radius:10px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text-muted); cursor:pointer;
+  transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+}
+.history-item .h-del .ic{width:15px; height:15px;}
+.history-item .h-del:hover{color:var(--red); border-color:var(--red); background:var(--red-soft);}
+.history-item .h-del:active{transform:scale(.88);}
+.undo-toast{
+  position:fixed; left:calc(50% - 50vw + 16px); right:calc(50% - 50vw + 16px); bottom:88px;
+  max-width:420px; margin:0 auto; z-index:60;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:12px 14px; box-shadow:0 14px 34px -12px rgba(0,0,0,.45);
+  font-size:13px; font-weight:600; color:var(--text); animation:toast-in .25s ease;
+}
+.undo-toast .pill-btn{margin-top:0;}
+@keyframes toast-in{from{opacity:0; transform:translateY(14px);}to{opacity:1; transform:translateY(0);}}
+
+/* Kartu lanjutkan sesi belum selesai */
+.resume-banner{margin:12px 0 0;}
+.resume-card{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  background:var(--red-soft); border:1px solid var(--red); border-left:4px solid var(--red);
+  border-radius:var(--r1); padding:12px 14px;
+}
+.resume-info{min-width:0; flex:1;}
+.resume-info strong{display:block; font-size:13.5px; line-height:1.4;}
+.resume-info span{font-size:11.5px; color:var(--text-muted);}
+.resume-actions{display:flex; gap:8px; flex-shrink:0;}
+.resume-actions .pill-btn{margin-top:0;}
 
 /* ============ RUN VIEW ============ */
 .run-map{width:100%; height:240px; border-radius:var(--r2); overflow:hidden; border:1px solid var(--border); background:var(--surface); margin-bottom:14px; box-shadow:var(--shadow-sm);}
