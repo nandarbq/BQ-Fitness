@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk dengan Google — BQ Fitness</title>
+<style>
+  :root{color-scheme:dark;}
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#0d0d11;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .card{text-align:center;padding:28px;max-width:340px;width:90%;}
+  .badge{width:52px;height:52px;margin:0 auto 14px;border-radius:16px;background:linear-gradient(135deg,#e11d44,#ff4d6d);
+    color:#fff;font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -10px rgba(225,29,68,.6);}
+  h1{font-size:17px;margin:0 0 6px;}
+  p{color:#9b9ba8;font-size:13.5px;margin:0 0 18px;line-height:1.5;}
+  .btn{display:inline-block;background:linear-gradient(135deg,#e11d44,#ff4d6d);color:#fff;text-decoration:none;
+    border:none;border-radius:14px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;}
+  .error{color:#ffb3bd;background:rgba(225,29,68,.12);border:1px solid rgba(225,29,68,.35);border-radius:12px;
+    padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="badge">BQ</div>
+  <h1 id="status">Menghubungkan akun Google…</h1>
+  <p id="detail">Tunggu sebentar ya.</p>
+  <div class="error" id="errorBox"></div>
+  <button class="btn" id="backBtn" style="display:none">Kembali ke BQ Fitness</button>
+</div>
+<script>
+  (function () {
+    const q = new URLSearchParams(location.search);
+    const h = new URLSearchParams(location.hash.slice(1));
+    const status = document.getElementById('status');
+    const detail = document.getElementById('detail');
+    const errorBox = document.getElementById('errorBox');
+    const backBtn = document.getElementById('backBtn');
+    const showError = (msg) => {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+      status.textContent = 'Masuk gagal';
+      detail.textContent = '';
+      backBtn.style.display = 'inline-block';
+    };
+    backBtn.addEventListener('click', () => location.replace('/'));
+
+    if (q.get('error')) {
+      showError('Login Google dibatalkan atau gagal (' + (q.get('error_description') || q.get('error')) + ').');
+      return;
+    }
+
+    const hasToken = h.get('access_token');
+    const hasCode = q.get('code');
+    if (!hasToken && !hasCode) {
+      showError('Tidak ada data login diterima. Silakan coba lagi.');
+      return;
+    }
+
+    let body;
+    if (hasCode) {
+      body = { code: q.get('code') };
+    } else {
+      body = { session: { access_token: h.get('access_token'), refresh_token: h.get('refresh_token'), expires_at: Number(h.get('expires_at') || 0) } };
+    }
+
+    fetch('./api/auth/google/finalize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.session) throw new Error(data.error || 'Gagal menghubungkan akun.');
+      localStorage.setItem('bq_session', JSON.stringify(data.session));
+      localStorage.setItem('bq_user', JSON.stringify(data.user || {}));
+      status.textContent = 'Berhasil!';
+      detail.textContent = 'Ayo lanjutkan latihanmu.';
+      location.replace('/');
+    }).catch((err) => {
+      showError(err.message || 'Terjadi kesalahan.');
+    });
+  })();
+</script>
+</body>
+</html>

@@ -71,6 +71,7 @@ const API = (() => {
     setSession(data.session, data.user);
     return data.user;
   }
+  async function googleStart() { return request('POST', '/auth/google'); }
   async function fetchMe() {
     const data = await request('GET', '/auth/me');
     currentUser = data.user;
@@ -185,7 +186,7 @@ const API = (() => {
   }
 
   return {
-    isAuthed, getUser, register, login, fetchMe, logout, saveProfile, setUser,
+    isAuthed, getUser, register, login, googleStart, fetchMe, logout, saveProfile, setUser,
     resetPassword, updatePassword,
     getProgram, onboard, updateWeight, switchProgram, saveSchedule, saveIntensity,
     getWorkouts, addWorkout, deleteWorkout,

@@ -1,7 +1,8 @@
-const CACHE_NAME = 'bq-fitness-v14';
+const CACHE_NAME = 'bq-fitness-v15';
 const APP_SHELL = [
   './',
   './index.html',
+  './google-callback.html',
   './manifest.json',
   './css/style.css',
   './js/icons.js',

@@ -81,6 +81,21 @@ const AUTH_UI = (() => {
         if (e.key === 'Enter') resetBtn.click();
       });
     }
+
+    const googleBtn = document.getElementById('googleAuthBtn');
+    if (googleBtn) {
+      googleBtn.addEventListener('click', async () => {
+        googleBtn.disabled = true;
+        errorBox.textContent = '';
+        try {
+          const { url } = await API.googleStart();
+          window.location.assign(url);
+        } catch (err) {
+          errorBox.textContent = err.message;
+          googleBtn.disabled = false;
+        }
+      });
+    }
   }
 
   function show() {

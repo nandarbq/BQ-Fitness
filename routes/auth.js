@@ -110,8 +110,69 @@ router.post('/login', asyncHandler(async (req, res) => {
   });
 }));
 
+/* ---- Masuk/Daftar dengan Google (OAuth) ---- */
+function googleCallbackUrl() {
+  const base = process.env.APP_URL ? process.env.APP_URL.replace(/\/$/, '') : '';
+  return base + '/google-callback.html';
+}
+
+router.post('/google', asyncHandler(async (req, res) => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: googleCallbackUrl() }
+  });
+  if (error) throw error;
+  res.json({ url: data.url });
+}));
+
+/* Finalisasi login Google: terima token (implicit flow) ATAU kode (PKCE),
+ * validasi ke Supabase, lalu pastikan profil pengguna ada. */
+router.post('/google/finalize', asyncHandler(async (req, res) => {
+  const { session, code } = req.body || {};
+  let authSession;
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(String(code));
+    if (error || !data.session) {
+      return res.status(401).json({ error: 'Tautan masuk Google tidak valid atau sudah kedaluwarsa.' });
+    }
+    authSession = data.session;
+  } else if (session && session.access_token) {
+    const setSessionPayload = { access_token: session.access_token };
+    if (session.refresh_token) setSessionPayload.refresh_token = session.refresh_token;
+    const { data, error } = await supabase.auth.setSession(setSessionPayload);
+    if (error || !data.session) {
+      return res.status(401).json({ error: 'Sesi Google tidak valid. Silakan coba lagi.' });
+    }
+    authSession = data.session;
+  } else {
+    return res.status(400).json({ error: 'Parameter tidak lengkap.' });
+  }
+
+  const user = authSession.user;
+  if (!user) return res.status(401).json({ error: 'Gagal mendapatkan data pengguna.' });
+
+  let profile = await getProfile(user.id);
+  if (!profile) {
+    const meta = user.user_metadata || {};
+    const name = String(meta.name || meta.full_name || 'Pengguna Google').slice(0, 80);
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .insert({ id: user.id, name });
+    if (profileErr) throw profileErr;
+    const { error: goalErr } = await supabase
+      .from('food_goals')
+      .insert({ user_id: user.id });
+    if (goalErr) throw goalErr;
+    profile = await getProfile(user.id);
+  }
+
+  res.json({ session: authSession, user: profile ? publicProfile(profile) : null });
+}));
+
 router.post('/refresh', asyncHandler(async (req, res) => {
   const { refresh_token } = req.body || {};
+
   if (!refresh_token) {
     return res.status(400).json({ error: 'refresh_token wajib diisi.' });
   }
