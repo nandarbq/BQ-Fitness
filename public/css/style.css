@@ -523,9 +523,11 @@ body.no-scroll{overflow:hidden;}
 .routine-list li{display:flex; justify-content:space-between; gap:10px; align-items:center; background:var(--bg); border:1px solid var(--border); border-radius:11px; padding:11px 13px; font-size:13.5px; font-weight:600;}
 .routine-list em{font-style:normal; color:var(--red); font-weight:700; font-family:var(--font-display); font-size:15px; flex-shrink:0;}
 .rest-text{font-size:13.5px; color:var(--text-muted); line-height:1.6; margin:0 0 14px;}
+.preview-note{font-size:12px; color:var(--text-muted); background:var(--surface); border:1px dashed var(--border); border-radius:10px; padding:10px 12px; margin-top:12px; line-height:1.5;}
+.catchup-note{font-size:12.5px; color:var(--red); background:var(--red-soft); border-radius:10px; padding:10px 12px; margin-top:12px; line-height:1.5;}
 .session-card .cta-btn{width:100%; margin-top:0;}
 
-/* Pelan mingguan */
+/* Plan mingguan */
 .split-week{display:grid; grid-template-columns:repeat(7,1fr); gap:7px; margin-bottom:18px;}
 .split-cell{background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:10px 4px; text-align:center; cursor:pointer; display:flex; flex-direction:column; gap:3px; transition:transform .1s ease, border-color .15s ease, background .15s ease;}
 .split-cell:active{transform:scale(.94);}

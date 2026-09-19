@@ -246,11 +246,12 @@ const WORKOUT = (() => {
     const box = document.getElementById('splitWeek');
     const st = status;
     if (!st || !st.program) {
-      box.innerHTML = '<p class="empty-note">Aktifkan program dulu untuk melihat pelan mingguan.</p>';
+      box.innerHTML = '<p class="empty-note">Aktifkan program dulu untuk melihat plan mingguan.</p>';
       return;
     }
     box.innerHTML = '';
     const todayISO = API.todayISO();
+    const todayCell = getTodaySession(restDays(), todayISO);
     buildWeekSchedule(restDays(), todayISO).forEach(c => {
       const chipDay = c.kind === 'gym' ? `HARI ${c.order}` : 'REST';
       const cell = document.createElement('div');
@@ -260,43 +261,71 @@ const WORKOUT = (() => {
         <span class="split-weekday">${c.short}</span>
         <strong>${eh(c.label)}</strong>
         <small>${eh(c.goal)}</small>`;
-      cell.addEventListener('click', () => renderToday(c.num, { previewMode: true }));
+      cell.addEventListener('click', () => {
+        renderToday(todayCell && todayCell.date === c.date ? undefined : c.num);
+      });
       box.appendChild(cell);
     });
   }
 
   /* ================= Today's session ================= */
-  function renderToday(viewNum, opts) {
-    const box = document.getElementById('todaySessionCard');
-    const st = status;
-    if (!st || !st.program) {
-      box.innerHTML = '<p class="empty-note">Aktifkan program dulu — nanti ada porsi latihan otomatis sesuai hari.</p>';
-      return;
-    }
-    const todayISO = API.todayISO();
-    const week = buildWeekSchedule(restDays(), todayISO);
-    const isToday = !viewNum;
-    const cell = viewNum ? (week.find(c => c.num === viewNum) || getTodaySession(restDays(), todayISO)) : getTodaySession(restDays(), todayISO);
-    if (!cell) {
-      box.innerHTML = '<p class="empty-note">Aktifkan program dulu — nanti ada porsi latihan otomatis sesuai hari.</p>';
-      return;
-    }
-    const program = st.program.program;
-    const intensity = st.program.intensity;
-    const lvl = intensityLevel(intensity);
-    const chipDay = cell.kind === 'gym' ? `HARI ${cell.order}` : 'REST';
+  function programEmptyBox() {
+    return '<p class="empty-note">Aktifkan program dulu — nanti ada porsi latihan otomatis sesuai hari.</p>';
+  }
 
+  function missedGymCells() {
+    const worked = new Set(cache.filter(w => w.date).map(w => w.date));
+    return buildWeekSchedule(restDays(), API.todayISO())
+      .filter(c => c.kind === 'gym' && c.date < API.todayISO() && !worked.has(c.date));
+  }
+
+  function sessionHead(cell, extra) {
+    const chipDay = cell.kind === 'gym' ? `HARI ${cell.order}` : 'REST';
+    return `<div class="session-head"><span class="day-chip">${chipDay}</span><div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${extra}</small></div></div>`;
+  }
+
+  function routineListHtml(routine) {
+    return `<ul class="routine-list">
+        ${routine.map(r => `<li><span>${eh(r.name)}</span><em>${r.sets} × ${eh(r.reps)}</em></li>`).join('')}
+      </ul>`;
+  }
+
+  /* Pratinjau read-only hari lain di grid — tidak ada tombol mulai. */
+  function renderSessionPreview(box, cell, program) {
     if (cell.kind === 'rest') {
-      box.innerHTML = `
-        <div class="session-head"><span class="day-chip">${chipDay}</span><div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${isToday ? ' · Hari ini' : ''}</small></div></div>
-        <p class="rest-text">Hari pemulihan — hasil latihan justru terbentuk saat otot beristirahat. Cukup aktif ringan & jaga makan.
-          ${goals ? `Target kalori hari ini <b>${Math.round(goals.cal)} kkal</b> tetap berjalan untuk program ${program}.` : ''}</p>`;
+      box.innerHTML = sessionHead(cell, ` · ${cell.long}`) +
+        '<p class="rest-text">Hari pemulihan — hasil latihan justru terbentuk saat otot beristirahat. Cukup aktif ringan & jaga makan.</p>' +
+        '<p class="preview-note">Ini pratinjau jadwal — mulai latihan hanya tersedia saat hari latihan tersebut tiba.</p>';
       return;
     }
     if (cell.kind === 'cardio') {
-      box.innerHTML = `
-        <div class="session-head"><span class="day-chip">${chipDay}</span><div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${isToday ? ' · Hari ini' : ''}</small></div></div>
-        <p class="rest-text">${eh(getCardioSuggestion(program))}</p>
+      box.innerHTML = sessionHead(cell, ` · ${cell.long}`) +
+        `<p class="rest-text">${eh(getCardioSuggestion(program))}</p>` +
+        '<p class="preview-note">Ini pratinjau jadwal — mulai latihan hanya tersedia saat hari latihan tersebut tiba.</p>';
+      return;
+    }
+    const routine = getDayRoutine(cell.libDay, program, programIntensity());
+    box.innerHTML = sessionHead(cell, ` · ${cell.long}`) +
+      routineListHtml(routine) +
+      '<p class="preview-note">Ini pratinjau jadwal — mulai latihan hanya tersedia saat hari latihan tersebut tiba.</p>';
+  }
+
+  /* Sesi yang sedang berjalan ("Hari Ini"): sesi hari ini, atau catch-up bila hari ini rest & ada yang terlewat. */
+  function renderWorkingSession(box, cell, todayCell, catchUp) {
+    const program = stProgram();
+    const intensity = programIntensity();
+    const lvl = intensityLevel(intensity);
+
+    if (cell.kind === 'rest') {
+      box.innerHTML = sessionHead(cell, ' · Hari ini') +
+        `<p class="rest-text">Hari pemulihan — hasil latihan justru terbentuk saat otot beristirahat. Cukup aktif ringan & jaga makan.
+          ${goals ? `Target kalori hari ini <b>${Math.round(goals.cal)} kkal</b> tetap berjalan untuk program ${program}.` : ''}</p>`;
+      return;
+    }
+
+    if (cell.kind === 'cardio') {
+      box.innerHTML = sessionHead(cell, ' · Hari ini') +
+        `<p class="rest-text">${eh(getCardioSuggestion(program))}</p>
         <button id="startCardioBtn" class="cta-btn"><svg class="ic"><use href="#i-activity"/></svg> Mulai Kardio Ringan</button>`;
       const btn = document.getElementById('startCardioBtn');
       if (btn) btn.addEventListener('click', () => NAV.showView('view-run'));
@@ -304,19 +333,47 @@ const WORKOUT = (() => {
     }
 
     const routine = getDayRoutine(cell.libDay, program, intensity);
-    const todayMark = isToday ? ' · Hari ini' : '';
-    box.innerHTML = `
-      <div class="session-head">
-        <span class="day-chip">${chipDay}</span>
-        <div><strong>${eh(cell.label)}</strong><small>${eh(cell.goal)}${todayMark}</small></div>
-      </div>
-      <p class="rest-text">${eh(lvl.weightNote)} · ${eh(lvl.rest)}</p>
-      <ul class="routine-list">
-        ${routine.map(r => `<li><span>${eh(r.name)}</span><em>${r.sets} × ${eh(r.reps)}</em></li>`).join('')}
-      </ul>
-      <button id="startTodayBtn" class="cta-btn"><svg class="ic"><use href="#i-play"/></svg> Mulai Latihan Ini</button>`;
+    const headExtra = catchUp ? '' : ' · Hari ini';
+    const catchNote = catchUp
+      ? `<p class="catchup-note">Hari ini jadwalmu <b>${eh(todayCell.label)}</b>. Kamu melewatkan latihan <b>${eh(cell.label)}</b> (${cell.long}) — mulai sekarang lalu kembali ke jadwal.</p>`
+      : '';
+    box.innerHTML = sessionHead(cell, headExtra) +
+      `<p class="rest-text">${eh(lvl.weightNote)} · ${eh(lvl.rest)}</p>` +
+      routineListHtml(routine) +
+      catchNote +
+      '<button id="startTodayBtn" class="cta-btn"><svg class="ic"><use href="#i-play"/></svg> Mulai Latihan Ini</button>';
 
     document.getElementById('startTodayBtn').addEventListener('click', () => startSession(cell, routine));
+  }
+
+  function renderToday(viewNum) {
+    const box = document.getElementById('todaySessionCard');
+    const st = status;
+    if (!st || !st.program) {
+      box.innerHTML = programEmptyBox();
+      return;
+    }
+    const todayISO = API.todayISO();
+    const week = buildWeekSchedule(restDays(), todayISO);
+
+    if (viewNum) {
+      const cell = week.find(c => c.num === viewNum) || getTodaySession(restDays(), todayISO);
+      if (!cell) { box.innerHTML = programEmptyBox(); return; }
+      renderSessionPreview(box, cell, st.program.program);
+      return;
+    }
+
+    const todayCell = getTodaySession(restDays(), todayISO);
+    const missed = missedGymCells();
+    const catchUp = !!(todayCell && todayCell.kind !== 'gym' && missed.length);
+    const cell = catchUp ? missed[missed.length - 1] : todayCell;
+    if (!cell) { box.innerHTML = programEmptyBox(); return; }
+    renderWorkingSession(box, cell, todayCell, catchUp);
+  }
+
+  function stProgram() {
+    const st = status;
+    return (st && st.program && st.program.program) || 'bulking';
   }
 
   /* ================= Editor jadwal (pindah hari rest) ================= */
