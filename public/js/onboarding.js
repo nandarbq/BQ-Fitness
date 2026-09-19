@@ -200,6 +200,8 @@ const ONBOARDING = (() => {
     document.getElementById('weeklyWeightInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') saveWeeklyWeight();
     });
+    const closeBtn = document.getElementById('closeWeeklyWeight');
+    if (closeBtn) closeBtn.addEventListener('click', () => NAV.closeModal('weeklyWeightModal'));
   }
 
   async function saveWeeklyWeight() {
