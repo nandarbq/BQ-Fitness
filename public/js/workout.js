@@ -5,6 +5,8 @@ const WORKOUT = (() => {
   let status = null;        // hasil GET /program
   let goals = null;
   let scheduleRest = [];    // state editor jadwal (hari rest yang sedang diedit)
+  const MIN_SCHEDULE_REST = 1;
+  const MAX_SCHEDULE_REST = 6;
   const PENDING_KEY = 'bq_pending_workout';
   let pending = null;       // sesi belum selesai yang bisa dilanjutkan
   let undo = null;          // latihan terakhir yang dihapus (untuk urungkan)
@@ -396,7 +398,7 @@ const WORKOUT = (() => {
 
   function scheduleHintText() {
     const n = scheduleRest.length;
-    return `Rest terpilih <b>${n}/3</b> hari. Satu hari rest paling akhir pekan otomatis jadi <b>Rest / Kardio</b>.`;
+    return `Rest terpilih <b>${n}</b> hari (bisa 1–6). Hari bukan-rest otomatis jadi sesi latihan berurutan; satu hari rest paling akhir pekan otomatis jadi <b>Rest / Kardio</b>.`;
   }
 
   function flashHint(message) {
@@ -433,8 +435,8 @@ const WORKOUT = (() => {
     const isRestNow = scheduleRest.includes(num);
     const wantRest = role === 'rest';
     if (wantRest === isRestNow) return;
-    if (wantRest && scheduleRest.length >= 3) {
-      flashHint('Maksimal <b>3 hari rest</b> — ubah hari yang terlanjur rest jadi Latihan dulu.');
+    if (wantRest && scheduleRest.length >= MAX_SCHEDULE_REST) {
+      flashHint(`Maksimal <b>${MAX_SCHEDULE_REST} hari rest</b> — ubah hari yang terlanjur rest jadi Latihan dulu.`);
       return;
     }
     scheduleRest = wantRest
@@ -452,8 +454,8 @@ const WORKOUT = (() => {
   }
 
   async function saveScheduleChanges() {
-    if (scheduleRest.length !== 3) {
-      flashHint('Pilih <b>3 hari rest</b> dulu sebelum menyimpan.');
+    if (scheduleRest.length < MIN_SCHEDULE_REST || scheduleRest.length > MAX_SCHEDULE_REST) {
+      flashHint(`Pilih <b>1–${MAX_SCHEDULE_REST} hari rest</b> dulu sebelum menyimpan.`);
       return;
     }
     const btn = document.getElementById('saveScheduleBtn');

@@ -1,7 +1,7 @@
 /* Katalog latihan statis untuk program bulking/cutting.
  * Jadwal mingguan menempel nama hari (Senin=1 … Minggu=7):
  *   default latihan Senin/Selasa/Kamis/Jumat, rest Rabu/Sabtu/Minggu.
- * User bisa memindahkan 3 hari rest -> rutinitas latihan auto menyesuaikan.
+ * User bisa mengatur 1–6 hari rest -> rutinitas latihan & rotasi sesi auto menyesuaikan.
  * Semua gerakan hanya memakai DUMBBELL (satu pasang dumbbell, beban per tangan).
  * Variasi:
  *   - program bulking/cutting  -> menentukan repetisi (jml set dasar)

@@ -308,15 +308,15 @@ router.post('/switch', asyncHandler(async (req, res) => {
   });
 }));
 
-/* ---- Atur jadwal mingguan: user memindahkan 3 hari rest ---- */
+/* ---- Atur jadwal mingguan: user mengatur 1–6 hari rest ---- */
 router.put('/schedule', asyncHandler(async (req, res) => {
   const { days } = req.body || {};
-  if (!Array.isArray(days) || days.length !== 3) {
-    return res.status(400).json({ error: 'Jadwal harus berisi tepat 3 hari rest (Senin=1 … Minggu=7).' });
+  if (!Array.isArray(days) || days.length < 1 || days.length > 6) {
+    return res.status(400).json({ error: 'Jadwal harus berisi 1 sampai 6 hari rest (Senin=1 … Minggu=7).' });
   }
   const rest = [...new Set(days.map(Number))].filter(n => !Number.isNaN(n) && n >= 1 && n <= 7);
-  if (rest.length !== 3) {
-    return res.status(400).json({ error: 'Pilih 3 hari berbeda antara nomor 1 (Senin) sampai 7 (Minggu).' });
+  if (rest.length !== days.length) {
+    return res.status(400).json({ error: 'Pilih hari berbeda antara nomor 1 (Senin) sampai 7 (Minggu).' });
   }
   rest.sort((a, b) => a - b);
 
