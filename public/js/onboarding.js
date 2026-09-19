@@ -10,6 +10,7 @@ const ONBOARDING = (() => {
     bindActivity();
     bindIntensity();
     bindGoal();
+    bindBirthdate();
     document.getElementById('obPreviewBtn').addEventListener('click', showPreview);
     document.getElementById('obBackBtn').addEventListener('click', () => {
       document.getElementById('obStepData').style.display = 'block';
@@ -82,10 +83,23 @@ const ONBOARDING = (() => {
 
   /* ---- Preview rekomendasi (mirror logika server, cukup untuk tampilan) ---- */
   function readData() {
-    const age = parseInt(document.getElementById('obAge').value, 10);
+    const birthdate = document.getElementById('obBirthdate').value;
+    const age = calcAge(birthdate);
     const weight = parseFloat(document.getElementById('obWeight').value);
     const height = parseFloat(document.getElementById('obHeight').value);
-    return { gender: obGender, age, weight, height, activityLevel: obActivity, intensity: obIntensity };
+    return { gender: obGender, age, ageValid: birthdate ? age != null : false, birthdate, weight, height, activityLevel: obActivity, intensity: obIntensity };
+  }
+
+  function bindBirthdate() {
+    const input = document.getElementById('obBirthdate');
+    if (!input) return;
+    const hint = document.getElementById('obAgeHint');
+    const update = () => {
+      const age = calcAge(input.value);
+      if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
+    };
+    input.addEventListener('input', update);
+    update();
   }
 
   function computePreview() {
@@ -136,7 +150,9 @@ const ONBOARDING = (() => {
     err.textContent = '';
     const bmi = computePreview() && computePreview().bmi;
     const d = readData();
-    if (!d.weight || !d.height || !d.age) { err.textContent = 'Lengkapi umur, berat, dan tinggi badan dulu.'; return; }
+    if (!d.birthdate || !d.ageValid) { err.textContent = 'Lengkapi tanggal lahir dulu.'; return; }
+    if (d.age < 10 || d.age > 100) { err.textContent = 'Umur harus antara 10–100 tahun (cek tanggal lahir).'; return; }
+    if (!d.weight || !d.height) { err.textContent = 'Lengkapi berat dan tinggi badan dulu.'; return; }
     if (bmi >= 18.5 && bmi < 25 && !obGoal) { err.textContent = 'BMI kamu normal — pilih dulu tujuanmu (Makin berisi / Makin ramping).'; return; }
 
     const p = computePreview();
@@ -163,10 +179,34 @@ const ONBOARDING = (() => {
         <div class="p-stat"><span>Kalori makan</span><b>${p.cal} kkal</b></div>
         <div class="p-stat"><span>Protein</span><b>${p.protein} g/hari</b></div>
       </div>
-      <p class="program-why">Target makan <b>${p.cal} kkal/hari</b> = jatah kalori yang <b>kamu makan</b> (dihitung dari BB, tinggi, umur, & aktivitas + program) — <b>bukan kalori yang harus dibakar.</b></p>`;
+      <p class="program-why">Target makan <b>${p.cal} kkal/hari</b> = jatah kalori yang <b>kamu makan</b> (dihitung dari BB, tinggi, umur, & aktivitas + program) — <b>bukan kalori yang harus dibakar.</b></p>
+      <div id="obAiRationale" class="program-why ai-why" style="display:none"><span class="rec-badge ai">AI</span><p></p></div>`;
 
     document.getElementById('obStepData').style.display = 'none';
     document.getElementById('obStepSummary').style.display = 'block';
+    loadAiRationale(p);
+  }
+
+  async function loadAiRationale(p) {
+    const box = document.getElementById('obAiRationale');
+    if (!box) return;
+    try {
+      const d = readData();
+      const resp = await API.getProgramRationale({
+        program: p.program, bmi: (p.bmi / 1).toFixed(1),
+        weight: d.weight, height: d.height, gender: d.gender, age: d.age,
+        activity: d.activityLevel, intensity: d.intensity,
+        targetWeight: p.target, durationWeeks: p.weeks
+      });
+      if (resp && resp.source === 'ai' && resp.text) {
+        box.querySelector('p').textContent = resp.text;
+        box.style.display = 'flex';
+      } else {
+        box.style.display = 'none';
+      }
+    } catch (e) {
+      box.style.display = 'none';
+    }
   }
 
   async function confirmOnboard() {
@@ -178,6 +218,7 @@ const ONBOARDING = (() => {
         name: (API.getUser() || {}).name || '',
         gender: d.gender,
         age: d.age,
+        birthdate: d.birthdate,
         weight: d.weight,
         height: d.height,
         activityLevel: d.activityLevel,

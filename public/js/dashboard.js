@@ -8,8 +8,30 @@ const DASHBOARD = (() => {
     const helpBtn = document.getElementById('calHelpBtn');
     if (helpBtn) helpBtn.addEventListener('click', toggleCalHelp);
     render();
+    loadAdvice();
     window.addEventListener('bq:dataChanged', render);
     window.addEventListener('bq:viewchange', (e) => { if (e.detail.id === 'view-dashboard') render(); });
+  }
+
+  async function loadAdvice() {
+    const card = document.getElementById('aiAdviceCard');
+    if (!card) return;
+    try {
+      const resp = await API.getDailyAdvice();
+      if (!resp || resp.source !== 'ai' || !resp.advice || !resp.advice.points) {
+        card.style.display = 'none';
+        return;
+      }
+      const a = resp.advice;
+      document.getElementById('aiAdviceTitle').textContent = a.title || 'Saran hari ini';
+      document.getElementById('aiAdviceList').innerHTML = (a.points || []).map(p => `<li>${esc(p)}</li>`).join('');
+      const summaryEl = document.getElementById('aiAdviceSummary');
+      if (a.summary) { summaryEl.textContent = a.summary; summaryEl.style.display = 'block'; }
+      else summaryEl.style.display = 'none';
+      card.style.display = 'block';
+    } catch (e) {
+      card.style.display = 'none';
+    }
   }
 
   function toggleCalHelp() {

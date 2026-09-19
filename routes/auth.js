@@ -2,7 +2,7 @@ const express = require('express');
 const supabase = require('../db/database');
 const { requireAuth } = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
-const { parseRestDays } = require('../lib/program');
+const { parseRestDays, effectiveAge } = require('../lib/program');
 
 const router = express.Router();
 
@@ -14,7 +14,8 @@ function publicProfile(row) {
     height: row.height,
     sleepTarget: row.sleep_target,
     gender: row.gender,
-    age: row.age,
+    age: effectiveAge(row),
+    birthdate: row.birthdate || null,
     activityLevel: row.activity_level,
     intensity: row.intensity,
     restDays: parseRestDays(row.rest_days),
@@ -185,3 +186,4 @@ router.post('/update-password', asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+module.exports.publicProfile = publicProfile;

@@ -5,10 +5,13 @@ const asyncHandler = require('../middleware/asyncHandler');
 
 const router = express.Router();
 router.use(requireAuth);
-const { applyWeightUpdate } = require('./program');
+const { applyWeightUpdate, recalcGoals } = require('./program');
+const { invalidateAiCache } = require('./ai');
+const { publicProfile } = require('./auth');
+const { calcAge } = require('../lib/program');
 
 router.put('/', asyncHandler(async (req, res) => {
-  const { name, weight, height, sleepTarget } = req.body || {};
+  const { name, weight, height, sleepTarget, birthdate } = req.body || {};
   const update = {
     name: String(name || '').trim(),
     height: Number(height) || 170,
@@ -22,10 +25,23 @@ router.put('/', asyncHandler(async (req, res) => {
     .maybeSingle();
   if (fetchErr) throw fetchErr;
 
+  let birthdateChanged = false;
+  if (birthdate) {
+    const age = calcAge(birthdate);
+    if (age == null || age < 10 || age > 100) {
+      return res.status(400).json({ error: 'Tanggal lahir tidak valid (umur harus 10–100 tahun).' });
+    }
+    if ((existing && existing.birthdate) !== birthdate) birthdateChanged = true;
+    update.birthdate = birthdate;
+    update.age = age;
+  }
+
+  let weightChanged = false;
   if (weight && existing && existing.program && Number(weight) !== existing.weight) {
     // BB diubah lewat profil saat program aktif: sinkronkan agar konsisten
     // dengan program & target makan otomatis.
     await applyWeightUpdate(req.userId, Number(weight));
+    weightChanged = true;
   } else {
     update.weight = Number(weight) || existing?.weight || 65;
   }
@@ -38,12 +54,20 @@ router.put('/', asyncHandler(async (req, res) => {
     .single();
   if (error) throw error;
 
-  res.json({
-    user: {
-      id: user.id, name: user.name,
-      weight: user.weight, height: user.height, sleepTarget: user.sleep_target
-    }
-  });
+  // Umur berubah karena tanggal lahir diubah: target makan dihitung ulang.
+  if (existing && existing.program && birthdateChanged) {
+    await recalcGoals(user);
+  }
+
+  if (birthdateChanged) {
+    await Promise.all([
+      invalidateAiCache(req.userId, 'meal'),
+      invalidateAiCache(req.userId, 'advice'),
+      invalidateAiCache(req.userId, 'program')
+    ]);
+  }
+
+  res.json({ user: publicProfile(user) });
 }));
 
 module.exports = router;

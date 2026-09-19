@@ -10,6 +10,7 @@ const workoutRoutes = require('./routes/workouts');
 const activityRoutes = require('./routes/activities');
 const foodRoutes = require('./routes/food');
 const sleepRoutes = require('./routes/sleep');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/food', foodRoutes);
 app.use('/api/sleep', sleepRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true, name: 'BQ Fitness API' }));
 

@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   sleep_target   real default 8,
   gender         text default null,
   age            integer default null,
+  birthdate      date default null,
   activity_level integer default null,
   intensity     text        default null,
   rest_days     text        default '3,6,7',
@@ -80,11 +81,24 @@ create table if not exists public.sleep_logs (
   created_at timestamptz default now()
 );
 
+create table if not exists public.ai_caches (
+  id         bigint generated always as identity primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  kind       text not null,
+  date       date not null,
+  ctx_hash   text not null,
+  payload    jsonb not null,
+  source     text default 'ai',
+  created_at timestamptz default now(),
+  unique (user_id, kind, date)
+);
+
 create index if not exists idx_workouts_user on public.workouts(user_id, date);
 create index if not exists idx_activities_user on public.activities(user_id, date);
 create index if not exists idx_food_logs_user on public.food_logs(user_id, date);
 create index if not exists idx_sleep_logs_user on public.sleep_logs(user_id, date);
 create index if not exists idx_weight_logs_user on public.weight_logs(user_id, date);
+create index if not exists idx_ai_caches_user on public.ai_caches(user_id, kind, date);
 
 -- Row Level Security: tiap pengguna hanya boleh mengakses datanya sendiri.
 -- Backend memakai service_role key (otomatis melewati RLS), jadi kebijakan ini
@@ -97,6 +111,7 @@ alter table public.activities enable row level security;
 alter table public.food_logs  enable row level security;
 alter table public.sleep_logs enable row level security;
 alter table public.weight_logs enable row level security;
+alter table public.ai_caches   enable row level security;
 
 drop policy if exists profiles_own on public.profiles;
 create policy profiles_own on public.profiles
@@ -124,4 +139,8 @@ create policy sleep_logs_own on public.sleep_logs
 
 drop policy if exists weight_logs_own on public.weight_logs;
 create policy weight_logs_own on public.weight_logs
+  for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+drop policy if exists ai_caches_own on public.ai_caches;
+create policy ai_caches_own on public.ai_caches
   for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);

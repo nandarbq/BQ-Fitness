@@ -9,8 +9,13 @@ const {
   parseRestDays,
   computeProgram,
   computeStatus,
-  computeNutrition
+  computeNutrition,
+  calcAge,
+  effectiveAge
 } = require('../lib/program');
+
+const { publicProfile } = require('./auth');
+const { invalidateAiCache } = require('./ai');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -27,6 +32,20 @@ async function getProfile(userId) {
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+/* Hitung ulang target makan dari profil terbaru (umur selalu dari tanggal lahir). */
+async function recalcGoals(profile, weightKg) {
+  if (!profile || !profile.program || !profile.gender) return null;
+  const { goals } = computeNutrition(profile.program, {
+    gender: profile.gender,
+    age: effectiveAge(profile),
+    weight: weightKg || profile.weight || profile.start_weight || 0,
+    height: profile.height || 170,
+    activityLevel: profile.activity_level || 3
+  });
+  await supabase.from('food_goals').upsert({ user_id: profile.id, ...goals }, { onConflict: 'user_id' });
+  return goals;
 }
 
 /* Simpan update berat: isi riwayat, refresh profil, hitung ulang target makan. */
@@ -46,21 +65,21 @@ async function applyWeightUpdate(userId, weightKg, recalcGoal = true) {
     weight_kg: weightKg
   });
 
-  if (recalcGoal && profile.program && profile.gender && profile.age) {
-    const { goals } = computeNutrition(profile.program, {
-      gender: profile.gender,
-      age: profile.age,
-      weight: weightKg,
-      height: profile.height || 170,
-      activityLevel: profile.activity_level || 3
-    });
-    await supabase.from('food_goals').upsert({ user_id: userId, ...goals }, { onConflict: 'user_id' });
-  }
+  if (recalcGoal) await recalcGoals(profile, weightKg);
   return profile;
 }
 
 async function upsertGoals(userId, goals) {
   await supabase.from('food_goals').upsert({ user_id: userId, ...goals }, { onConflict: 'user_id' });
+}
+
+/* Data program/profil berubah -> buang cache AI hari ini biar hasil berikutnya segar. */
+async function flushAi(userId) {
+  await Promise.all([
+    invalidateAiCache(userId, 'meal'),
+    invalidateAiCache(userId, 'advice'),
+    invalidateAiCache(userId, 'program')
+  ]);
 }
 
 async function loadProgramResponse(userId) {
@@ -79,7 +98,7 @@ async function loadProgramResponse(userId) {
 
 /* ---- Onboarding: input BB/TB/dll -> rekomendasi program + target makan ---- */
 router.post('/onboard', asyncHandler(async (req, res) => {
-  const { name, gender, age, weight, height, activityLevel, intensity, goal } = req.body || {};
+  const { name, gender, age, birthdate, weight, height, activityLevel, intensity, goal } = req.body || {};
 
   if (!gender || !VALID_GENDERS.includes(gender)) {
     return res.status(400).json({ error: 'Jenis kelamin wajib diisi (pria/wanita).' });
@@ -90,9 +109,14 @@ router.post('/onboard', asyncHandler(async (req, res) => {
   if (!height || height < 100 || height > 250) {
     return res.status(400).json({ error: 'Tinggi badan harus antara 100–250 cm.' });
   }
-  if (!age || age < 10 || age > 100) {
+  const computedAge = birthdate ? calcAge(birthdate) : null;
+  if (computedAge != null && (computedAge < 10 || computedAge > 100)) {
+    return res.status(400).json({ error: 'Umur harus antara 10–100 tahun (cek tanggal lahir).' });
+  }
+  if (computedAge == null && (!age || age < 10 || age > 100)) {
     return res.status(400).json({ error: 'Umur harus antara 10–100 tahun.' });
   }
+  const finalAge = computedAge != null ? computedAge : (age ? Number(age) : null);
   const act = Number(activityLevel);
   if (!act || ![1, 2, 3, 4, 5].includes(act)) {
     return res.status(400).json({ error: 'Level aktivitas wajib diisi.' });
@@ -103,7 +127,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
 
   const result = computeProgram({
     gender,
-    age,
+    age: finalAge,
     weight,
     height,
     activityLevel: act,
@@ -112,7 +136,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
 
   const update = {
     gender,
-    age,
+    age: finalAge,
     activity_level: act,
     intensity,
     rest_days: DEFAULT_REST_DAYS.join(','),
@@ -125,6 +149,7 @@ router.post('/onboard', asyncHandler(async (req, res) => {
     duration_weeks: result.durationWeeks,
     last_weight_date: todayISO()
   };
+  if (birthdate) update.birthdate = birthdate;
   if (name !== undefined) update.name = String(name).trim();
 
   const { data: profile, error: profileErr } = await supabase
@@ -141,22 +166,11 @@ router.post('/onboard', asyncHandler(async (req, res) => {
     weight_kg: weight
   });
   await upsertGoals(req.userId, result.goals);
+  await flushAi(req.userId);
 
   const payload = await loadProgramResponse(req.userId);
   res.status(201).json({
-    user: {
-      id: profile.id,
-      name: profile.name,
-      weight: profile.weight,
-      height: profile.height,
-      sleepTarget: profile.sleep_target,
-      gender: profile.gender,
-      age: profile.age,
-      activityLevel: profile.activity_level,
-      intensity: profile.intensity,
-      restDays: parseRestDays(profile.rest_days),
-      program: profile.program
-    },
+    user: publicProfile(profile),
     ...payload
   });
 }));
@@ -173,21 +187,10 @@ router.post('/weight', asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'Berat badan harus antara 30–300 kg.' });
   }
   const profile = await applyWeightUpdate(req.userId, weight);
+  await flushAi(req.userId);
   const payload = await loadProgramResponse(req.userId);
   res.json({
-    user: {
-      id: profile.id,
-      name: profile.name,
-      weight: profile.weight,
-      height: profile.height,
-      sleepTarget: profile.sleep_target,
-      gender: profile.gender,
-      age: profile.age,
-      activityLevel: profile.activity_level,
-      intensity: profile.intensity,
-      restDays: parseRestDays(profile.rest_days),
-      program: profile.program
-    },
+    user: publicProfile(profile),
     ...payload
   });
 }));
@@ -206,21 +209,10 @@ router.put('/intensity', asyncHandler(async (req, res) => {
     .single();
   if (error) throw error;
 
+  await flushAi(req.userId);
   const payload = await loadProgramResponse(req.userId);
   res.json({
-    user: {
-      id: profile.id,
-      name: profile.name,
-      weight: profile.weight,
-      height: profile.height,
-      sleepTarget: profile.sleep_target,
-      gender: profile.gender,
-      age: profile.age,
-      activityLevel: profile.activity_level,
-      intensity: profile.intensity,
-      restDays: parseRestDays(profile.rest_days),
-      program: profile.program
-    },
+    user: publicProfile(profile),
     ...payload
   });
 }));
@@ -246,7 +238,7 @@ router.post('/switch', asyncHandler(async (req, res) => {
   const weight = profile.weight || profile.start_weight || 0;
   const ctx = {
     gender: profile.gender,
-    age: profile.age,
+    age: effectiveAge(profile),
     weight,
     height: profile.height || 170,
     activityLevel: profile.activity_level || 3
@@ -289,21 +281,10 @@ router.post('/switch', asyncHandler(async (req, res) => {
   if (error) throw error;
 
   await upsertGoals(req.userId, goals);
+  await flushAi(req.userId);
   const payload = await loadProgramResponse(req.userId);
   res.json({
-    user: {
-      id: updated.id,
-      name: updated.name,
-      weight: updated.weight,
-      height: updated.height,
-      sleepTarget: updated.sleep_target,
-      gender: updated.gender,
-      age: updated.age,
-      activityLevel: updated.activity_level,
-      intensity: updated.intensity,
-      restDays: parseRestDays(updated.rest_days),
-      program: updated.program
-    },
+    user: publicProfile(updated),
     ...payload
   });
 }));
@@ -327,24 +308,14 @@ router.put('/schedule', asyncHandler(async (req, res) => {
     .single();
   if (error) throw error;
 
+  await flushAi(req.userId);
   const payload = await loadProgramResponse(req.userId);
   res.json({
-    user: {
-      id: updated.id,
-      name: updated.name,
-      weight: updated.weight,
-      height: updated.height,
-      sleepTarget: updated.sleep_target,
-      gender: updated.gender,
-      age: updated.age,
-      activityLevel: updated.activity_level,
-      intensity: updated.intensity,
-      restDays: rest,
-      program: updated.program
-    },
+    user: publicProfile(updated),
     ...payload
   });
 }));
 
 module.exports = router;
 module.exports.applyWeightUpdate = applyWeightUpdate;
+module.exports.recalcGoals = recalcGoals;

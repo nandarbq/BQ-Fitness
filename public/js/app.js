@@ -65,6 +65,17 @@ function initProfile() {
   document.getElementById('profWeight').value = p.weight || 65;
   document.getElementById('profHeight').value = p.height || 170;
   document.getElementById('profSleepTarget').value = p.sleepTarget || 8;
+  const birthInput = document.getElementById('profBirthdate');
+  if (birthInput) {
+    birthInput.value = p.birthdate || '';
+    const hint = document.getElementById('profAgeHint');
+    const updateHint = () => {
+      const age = calcAge(birthInput.value);
+      if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
+    };
+    birthInput.addEventListener('input', updateHint);
+    updateHint();
+  }
 
   const saveBtn = document.getElementById('saveProfileBtn');
   const freshBtn = saveBtn.cloneNode(true);
@@ -76,6 +87,7 @@ function initProfile() {
       height: parseFloat(document.getElementById('profHeight').value) || 170,
       sleepTarget: parseFloat(document.getElementById('profSleepTarget').value) || 8
     };
+    if (birthInput && birthInput.value) profile.birthdate = birthInput.value;
     try {
       await API.saveProfile(profile);
       NAV.closeModal('profileModal');

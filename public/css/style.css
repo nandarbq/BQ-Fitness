@@ -245,6 +245,7 @@ h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
 }
 .text-input:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px var(--red-soft);}
 .text-input.small{padding:10px 12px; border-radius:12px;}
+.field-hint{display:block; font-size:11px; font-weight:500; color:var(--red); margin-top:4px; text-transform:none; letter-spacing:normal;}
 label{display:block; font-size:12.5px; font-weight:600; color:var(--text-muted); margin-bottom:13px;}
 .date-input{
   border:1.5px solid var(--border); background:var(--surface); color:var(--text);
@@ -393,6 +394,51 @@ label{display:block; font-size:12.5px; font-weight:600; color:var(--text-muted);
 }
 .f-del .ic{width:14px;height:14px;}
 .f-del:active{transform:scale(.92);}
+
+.meal-block-head h3 small{font-size:10.5px; font-weight:600; color:var(--text-muted);}
+
+/* ---- Rekomendasi Menu ---- */
+.rec-badge{
+  font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+  background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border);
+  border-radius:20px; padding:4px 10px; white-space:nowrap;
+}
+.rec-badge.ai{background:var(--red-soft); color:var(--red); border-color:transparent;}
+#mealRecSub{margin-bottom:12px; line-height:1.5;}
+#mealRecSub b{color:var(--text);}
+.rec-meal{background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:6px 16px 14px; margin-bottom:12px; box-shadow:var(--shadow-sm);}
+.rec-meal-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0 8px; border-bottom:1px dashed var(--border); margin-bottom:4px;}
+.rec-meal-label{font-size:13px; font-weight:700;}
+.rec-meal-time{font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:5px; font-weight:600;}
+.rec-meal-time .ic{width:13px;height:13px; color:var(--red);}
+.rec-item{padding:10px 0; border-bottom:1px dashed var(--border);}
+.rec-item:last-child{border-bottom:none; padding-bottom:0;}
+.rec-item-main{display:flex; flex-direction:column; gap:2px;}
+.rec-item-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.rec-item-top strong{font-size:13.5px; line-height:1.35;}
+.rec-qty{font-size:11px; color:var(--text-muted);}
+.rec-add{background:var(--red-soft); color:var(--red);}
+.rec-add .ic{width:15px;height:15px;}
+.rec-alts{display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:7px; font-size:11px; color:var(--text-muted);}
+.rec-chip{
+  border:1px solid var(--border); background:var(--bg); color:var(--text);
+  border-radius:20px; padding:4px 10px; font-size:11px; font-weight:600; cursor:pointer;
+  transition:all .15s ease;
+}
+.rec-chip:hover{color:var(--red); border-color:var(--red); background:var(--red-soft);}
+.rec-chip:active{transform:scale(.96);}
+
+/* ---- Saran AI (dashboard) & alasan program ---- */
+.ai-advice{
+  margin-top:16px; background:linear-gradient(150deg, var(--red-soft) 0%, var(--surface) 55%, var(--surface-2) 100%);
+  border:1px solid var(--border); border-radius:var(--r2); padding:16px 18px; box-shadow:var(--shadow-sm);
+}
+.ai-advice-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+.ai-advice-head strong{font-size:14px;}
+.ai-advice-list{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:7px; font-size:12.5px; line-height:1.55; color:var(--text);}
+.ai-advice-summary{margin:10px 0 0; font-size:12px; color:var(--text-muted); line-height:1.55; font-style:italic;}
+.ai-why{display:flex; align-items:flex-start; gap:9px; font-size:12px; line-height:1.55; color:var(--text-muted); margin-top:10px;}
+.ai-why p{margin:0; flex:1;}
 
 .goal-form{background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:16px; box-shadow:var(--shadow-sm);}
 .goal-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 12px;}

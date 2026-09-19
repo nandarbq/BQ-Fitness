@@ -165,6 +165,18 @@ const API = (() => {
   async function addSleepLog(s) { return (await request('POST', '/sleep', s)).log; }
   async function deleteSleepLog(id) { return (await request('DELETE', '/sleep/' + id)); }
 
+  // ---- AI ----
+  async function getMealRecommend() { return request('GET', '/ai/meal'); }
+  async function refreshMealRecommend() { return request('POST', '/ai/meal/refresh'); }
+  async function getDailyAdvice() { return request('GET', '/ai/advice'); }
+  async function getProgramRationale(params) {
+    const qs = params ? '?' + Object.entries(params).map(([k, v]) => {
+      if (v === undefined || v === null || v === '') return null;
+      return encodeURIComponent(k) + '=' + encodeURIComponent(v);
+    }).filter(Boolean).join('&') : '';
+    return request('GET', '/ai/program' + qs);
+  }
+
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function todayISO() {
     const d = new Date();
@@ -180,6 +192,7 @@ const API = (() => {
     getActivities, addActivity, deleteActivity,
     getFoodLogs, addFoodLog, deleteFoodLog, getFoodGoal, saveFoodGoal,
     getSleepLogs, addSleepLog, deleteSleepLog,
+    getMealRecommend, refreshMealRecommend, getDailyAdvice, getProgramRationale,
     uid, todayISO
   };
 })();

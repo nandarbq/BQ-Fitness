@@ -17,6 +17,18 @@ const WEEKDAYS = [
   { num: 7, long: 'Minggu', short: 'Min' }
 ];
 
+/* Umur dalam tahun dari tanggal lahir (YYYY-MM-DD). Null bila tidak valid. */
+function calcAge(birthDate) {
+  if (!birthDate) return null;
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? new Date(birthDate + 'T00:00:00') : new Date(birthDate);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age <= 120 ? age : null;
+}
+
 const DEFAULT_REST_DAYS = [3, 6, 7];
 
 /* Urutan latihan mengikuti urutan hari latihan dalam sepekan:
