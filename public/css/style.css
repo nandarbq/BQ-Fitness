@@ -601,6 +601,9 @@ body.no-scroll{overflow:hidden;}
 
 #transitionOptions{display:flex; flex-direction:column;}
 .trans-opt{width:100%; text-align:left; margin-bottom:10px;}
+#intensityOptions .goal-opt{width:100%; text-align:left;}
+#intensityOptions .goal-opt small{font-weight:500; color:var(--text-muted);}
+.modal-opts{display:flex; flex-direction:column; gap:10px;}
 #transitionOptions .trans-divider{color:var(--text-muted); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin:6px 0 10px; text-align:center;}
 .pill-btn.warn{color:var(--red); border-color:var(--red); width:100%; margin-top:12px;}
 

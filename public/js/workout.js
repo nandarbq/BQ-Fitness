@@ -57,6 +57,7 @@ const WORKOUT = (() => {
 
   function init() {
     bindScheduleEditor();
+    bindIntensityEditor();
     const undoBtn = document.getElementById('undoBtn');
     if (undoBtn) undoBtn.addEventListener('click', undoDelete);
     return refresh();
@@ -108,10 +109,13 @@ const WORKOUT = (() => {
       </div>
       <div class="program-why">${p.targetWeight ? `Progress menuju target: <b>${p.progressPct}%</b>. Perjalanan: <b>${p.startWeight} kg</b> → <b>${p.targetWeight} kg</b>.` : ''}</div>
       ${extra}
-      <button id="openWeeklyWeightBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-target"/></svg> Perbarui BB mingguan</button>`;
+      <button id="openWeeklyWeightBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-target"/></svg> Perbarui BB mingguan</button>
+      <button id="openIntensityBtn" class="pill-btn ghost"><svg class="ic"><use href="#i-zap"/></svg> Ubah intensitas</button>`;
 
     const openWw = document.getElementById('openWeeklyWeightBtn');
     if (openWw) openWw.addEventListener('click', () => ONBOARDING.showWeekly());
+    const openIntBtn = document.getElementById('openIntensityBtn');
+    if (openIntBtn) openIntBtn.addEventListener('click', openIntensityModal);
     const transBtn = document.getElementById('progTransitionBtn');
     if (transBtn) transBtn.addEventListener('click', () => ONBOARDING.showTransition(p, 'reached'));
     const evalBtn = document.getElementById('progEvaluateBtn');
@@ -121,6 +125,42 @@ const WORKOUT = (() => {
   function restDays() {
     const st = status;
     return (st && st.program && st.program.restDays) || DEFAULT_REST_DAYS;
+  }
+
+  /* ================= Ubah intensitas latihan ================= */
+  function bindIntensityEditor() {
+    const closeBtn = document.getElementById('closeIntensity');
+    if (closeBtn) closeBtn.addEventListener('click', () => NAV.closeModal('intensityModal'));
+    const saveBtn = document.getElementById('saveIntensityBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveIntensityChanges);
+  }
+
+  function openIntensityModal() {
+    const cur = programIntensity();
+    document.querySelectorAll('#intensityOptions .goal-opt').forEach(b => {
+      b.classList.toggle('active', b.dataset.v === cur);
+    });
+    document.getElementById('intensityError').textContent = '';
+    NAV.openModal('intensityModal');
+  }
+
+  async function saveIntensityChanges() {
+    const selected = document.querySelector('#intensityOptions .goal-opt.active');
+    const errEl = document.getElementById('intensityError');
+    if (!selected) { errEl.textContent = 'Pilih satu tingkat intensitas dulu.'; return; }
+    const btn = document.getElementById('saveIntensityBtn');
+    btn.disabled = true;
+    try {
+      await API.saveIntensity(selected.dataset.v);
+      errEl.textContent = '';
+      btn.disabled = false;
+      NAV.closeModal('intensityModal');
+      await refresh();
+      window.dispatchEvent(new CustomEvent('bq:dataChanged'));
+    } catch (e) {
+      errEl.textContent = e.message;
+      btn.disabled = false;
+    }
   }
 
   /* ================= Alert latihan terlewat ================= */

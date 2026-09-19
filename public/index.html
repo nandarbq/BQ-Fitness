@@ -565,6 +565,24 @@
   </div>
 </div>
 
+<!-- INTENSITY MODAL -->
+<div id="intensityModal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Ubah Intensitas Latihan</h2>
+      <button id="closeIntensity" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
+    </div>
+    <p class="modal-sub">Menyesuaikan jumlah set, saran beban dumbbell, dan istirahat tiap gerakan.</p>
+    <div id="intensityOptions" class="modal-opts">
+      <button class="goal-opt" data-v="pemula">Pemula<small>Baru mulai, utamakan teknik dulu · set lebih sedikit, istirahat ±90 detik</small></button>
+      <button class="goal-opt" data-v="menengah">Menengah<small>Sudah rutin latihan beban · istirahat 60–90 detik</small></button>
+      <button class="goal-opt" data-v="mahir">Mahir<small>Terbiasa beban berat & progresif · set lebih banyak, istirahat ±60 detik</small></button>
+    </div>
+    <p id="intensityError" class="auth-error"></p>
+    <button id="saveIntensityBtn" class="cta-btn"><svg class="ic"><use href="#i-zap"/></svg> Simpan Intensitas</button>
+  </div>
+</div>
+
 <!-- ONBOARDING MODAL (wajib pertama kali) -->
 <div id="onboardModal" class="modal-overlay" data-no-close="true">
   <div class="modal-sheet onboard-sheet">

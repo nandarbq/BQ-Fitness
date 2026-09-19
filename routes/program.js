@@ -192,6 +192,39 @@ router.post('/weight', asyncHandler(async (req, res) => {
   });
 }));
 
+/* ---- Ubah intensitas latihan (pemula/menengah/mahir) ---- */
+router.put('/intensity', asyncHandler(async (req, res) => {
+  const { intensity } = req.body || {};
+  if (!intensity || !VALID_INTENSITY.includes(intensity)) {
+    return res.status(400).json({ error: 'Intensitas latihan tidak valid (pemula/menengah/mahir).' });
+  }
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .update({ intensity })
+    .eq('id', req.userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+
+  const payload = await loadProgramResponse(req.userId);
+  res.json({
+    user: {
+      id: profile.id,
+      name: profile.name,
+      weight: profile.weight,
+      height: profile.height,
+      sleepTarget: profile.sleep_target,
+      gender: profile.gender,
+      age: profile.age,
+      activityLevel: profile.activity_level,
+      intensity: profile.intensity,
+      restDays: parseRestDays(profile.rest_days),
+      program: profile.program
+    },
+    ...payload
+  });
+}));
+
 /* ---- Ganti / perpanjang program: hanya boleh saat target tercapai / waktu habis ----
  * recalc=true  -> pilih program otomatis dari BMI/BB terbaru.
  * program=sama -> extend: siklus baru dengan target & durasi dihitung dari BB sekarang. */

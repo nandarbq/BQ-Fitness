@@ -134,6 +134,11 @@ const API = (() => {
     setUser(data.user);
     return data;
   }
+  async function saveIntensity(intensity) {
+    const data = await request('PUT', '/program/intensity', { intensity });
+    setUser(data.user);
+    return data;
+  }
 
   // ---- workouts ----
   async function getWorkouts() { return (await request('GET', '/workouts')).workouts; }
@@ -170,7 +175,7 @@ const API = (() => {
   return {
     isAuthed, getUser, register, login, fetchMe, logout, saveProfile, setUser,
     resetPassword, updatePassword,
-    getProgram, onboard, updateWeight, switchProgram, saveSchedule,
+    getProgram, onboard, updateWeight, switchProgram, saveSchedule, saveIntensity,
     getWorkouts, addWorkout, deleteWorkout,
     getActivities, addActivity, deleteActivity,
     getFoodLogs, addFoodLog, deleteFoodLog, getFoodGoal, saveFoodGoal,
