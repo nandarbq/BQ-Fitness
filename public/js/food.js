@@ -170,7 +170,7 @@ const FOOD = (() => {
       const targetPart = goalCache && p.targetWeight
         ? ` · target BB ${p.targetWeight} kg (minggu ke-${Math.min(p.elapsedWeeks + 1, p.durationWeeks)} dari ${p.durationWeeks})`
         : '';
-      note.innerHTML = `<svg class="ic"><use href="#i-zap"/></svg> Target makan dihitung <b>otomatis</b> dari program <b>${eh(info.title || p.program)}</b> kamu${targetPart}. Ikuti target ini supaya program berjalan maksimal.`;
+      note.innerHTML = `<svg class="ic"><use href="#i-zap"/></svg> Target makan dihitung <b>otomatis</b> dari program <b>${eh(info.title || p.program)}</b> kamu${targetPart}. Target makan = <b>jatah kalori yang kamu konsumsi, bukan kalori yang harus dibakar.</b> Ikuti target ini supaya program berjalan maksimal.`;
       note.style.display = 'flex';
     } else {
       note.style.display = 'none';

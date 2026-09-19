@@ -160,9 +160,10 @@ const ONBOARDING = (() => {
       <div class="program-stats">
         <div class="p-stat"><span>Target BB</span><b>${p.target} kg</b></div>
         <div class="p-stat"><span>Berat sekarang</span><b>${d.weight} kg</b></div>
-        <div class="p-stat"><span>Target kalori</span><b>${p.cal} kkal</b></div>
+        <div class="p-stat"><span>Kalori makan</span><b>${p.cal} kkal</b></div>
         <div class="p-stat"><span>Protein</span><b>${p.protein} g/hari</b></div>
-      </div>`;
+      </div>
+      <p class="program-why">Target makan <b>${p.cal} kkal/hari</b> = jatah kalori yang <b>kamu makan</b> (dihitung dari BB, tinggi, umur, & aktivitas + program) — <b>bukan kalori yang harus dibakar.</b></p>`;
 
     document.getElementById('obStepData').style.display = 'none';
     document.getElementById('obStepSummary').style.display = 'block';

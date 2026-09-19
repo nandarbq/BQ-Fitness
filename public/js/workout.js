@@ -106,7 +106,7 @@ const WORKOUT = (() => {
       <div class="program-stats">
         <div class="p-stat"><span>BB sekarang</span><b>${fmtKg(p.currentWeight)}</b></div>
         <div class="p-stat"><span>Target</span><b>${fmtKg(p.targetWeight)}</b></div>
-        <div class="p-stat"><span>Kalori</span><b>${goals ? Math.round(goals.cal) : '—'} kkal</b></div>
+        <div class="p-stat"><span>Kalori makan</span><b>${goals ? Math.round(goals.cal) : '—'} kkal</b></div>
         <div class="p-stat"><span>BMI</span><b>${p.bmi}</b></div>
       </div>
       <div class="program-why">${p.targetWeight ? `Progress menuju target: <b>${p.progressPct}%</b>. Perjalanan: <b>${p.startWeight} kg</b> → <b>${p.targetWeight} kg</b>.` : ''}</div>
@@ -321,7 +321,7 @@ const WORKOUT = (() => {
     if (cell.kind === 'rest') {
       box.innerHTML = sessionHead(cell, ' · Hari ini') +
         `<p class="rest-text">Hari pemulihan — hasil latihan justru terbentuk saat otot beristirahat. Cukup aktif ringan & jaga makan.
-          ${goals ? `Target kalori hari ini <b>${Math.round(goals.cal)} kkal</b> tetap berjalan untuk program ${program}.` : ''}</p>`;
+          ${goals ? `Target makan harianmu <b>${Math.round(goals.cal)} kkal</b> (jatah kalori, bukan bakar) tetap berjalan untuk program ${program}.` : ''}</p>`;
       return;
     }
 

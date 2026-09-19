@@ -229,22 +229,29 @@
       </div>
 
       <div class="ring-card">
-        <div class="ring-wrap">
-          <svg viewBox="0 0 140 140" class="ring-svg">
-            <circle cx="70" cy="70" r="60" class="ring-bg"/>
-            <circle cx="70" cy="70" r="60" class="ring-fg" id="calRing"/>
-          </svg>
-          <div class="ring-center">
-            <span class="ring-label">Kalori hari ini</span>
-            <span class="ring-num" id="calRemaining">0</span>
-            <span class="ring-sub">kkal tersisa</span>
+        <div class="ring-main">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 140 140" class="ring-svg">
+              <circle cx="70" cy="70" r="60" class="ring-bg"/>
+              <circle cx="70" cy="70" r="60" class="ring-fg" id="calRing"/>
+            </svg>
+            <div class="ring-center">
+              <span class="ring-label">Kalori makan</span>
+              <span class="ring-num" id="calRemaining">0</span>
+              <span class="ring-sub">kkal sisa jatah makan</span>
+            </div>
+          </div>
+          <div class="ring-stats">
+            <div class="ring-stat"><span id="calIn">0</span><small>Masuk</small></div>
+            <div class="ring-stat"><span id="calBurn">0</span><small>Terbakar</small></div>
+            <div class="ring-stat"><span id="calTarget">0</span><small>Target</small></div>
           </div>
         </div>
-        <div class="ring-stats">
-          <div class="ring-stat"><span id="calIn">0</span><small>Masuk</small></div>
-          <div class="ring-stat"><span id="calBurn">0</span><small>Terbakar</small></div>
-          <div class="ring-stat"><span id="calTarget">0</span><small>Target</small></div>
+        <div class="ring-caption-row">
+          <p id="calCaption" class="ring-caption">Target makan harian dari programmu.</p>
+          <button id="calHelpBtn" class="help-chip" title="Apa angka ini?">?</button>
         </div>
+        <div id="calHelpPanel" class="cal-help" style="display:none"></div>
       </div>
 
       <div class="stat-grid">
@@ -413,7 +420,7 @@
       <div class="macro-card">
         <div class="macro-row">
           <div class="macro-head">
-            <span class="macro-label"><svg class="ic"><use href="#i-flame"/></svg> Kalori</span>
+            <span class="macro-label"><svg class="ic"><use href="#i-flame"/></svg> Kalori makan</span>
             <span class="macro-value"><b id="foodCalIn">0</b> / <span id="foodCalTarget">0</span> kkal</span>
           </div>
           <div class="macro-bar-bg"><div class="macro-bar-fg" id="calBarFg"></div></div>

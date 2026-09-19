@@ -1,11 +1,71 @@
 const DASHBOARD = (() => {
   const CIRC = 2 * Math.PI * 60;
+  const ACTIVITY_FACTORS = { 1: 1.2, 2: 1.375, 3: 1.55, 4: 1.725, 5: 1.9 };
+  const ACTIVITY_LABELS = { 1: 'Sedentari', 2: 'Ringan', 3: 'Sedang', 4: 'Berat', 5: 'Atlet' };
 
   function init() {
     document.getElementById('calRing').style.strokeDasharray = CIRC;
+    const helpBtn = document.getElementById('calHelpBtn');
+    if (helpBtn) helpBtn.addEventListener('click', toggleCalHelp);
     render();
     window.addEventListener('bq:dataChanged', render);
     window.addEventListener('bq:viewchange', (e) => { if (e.detail.id === 'view-dashboard') render(); });
+  }
+
+  function toggleCalHelp() {
+    const panel = document.getElementById('calHelpPanel');
+    const btn = document.getElementById('calHelpBtn');
+    if (!panel) return;
+    const open = panel.style.display === 'block';
+    panel.style.display = open ? 'none' : 'block';
+    if (btn) btn.classList.toggle('active', !open);
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+
+  function renderCalHelp(goal, user) {
+    const caption = document.getElementById('calCaption');
+    const panel = document.getElementById('calHelpPanel');
+    const cal = (goal && goal.cal) || 2000;
+    const st = WORKOUT.programStatus();
+    const prog = st && st.program && st.program.program;
+    const info = PROGRAM_INFO[prog] || {};
+
+    if (caption) {
+      caption.innerHTML = prog
+        ? `Target makan <b>${cal}</b> kkal/hari dari program <b>${esc(info.title || prog)}</b>.`
+        : 'Target kalori bisa diatur di tab Makan.';
+    }
+    if (!panel) return;
+
+    const hasData = user && user.weight && user.height && user.age && user.activityLevel;
+    let bmr = 0, tdee = 0, actLabel = '';
+    if (hasData) {
+      bmr = 10 * user.weight + 6.25 * user.height - 5 * user.age;
+      bmr += user.gender === 'wanita' ? -161 : 5;
+      tdee = Math.round(bmr * (ACTIVITY_FACTORS[user.activityLevel] || 1.375));
+      actLabel = ACTIVITY_LABELS[user.activityLevel] || '';
+    }
+
+    const lines = [];
+    lines.push('Sisa = target makan − makanan yang sudah masuk hari ini. Kalori dari lari/aktivitas bukan pengurang angka ini.');
+    if (hasData) {
+      const adj = prog === 'cutting'
+        ? ' lalu dikurangi defisit 400 (cutting)'
+        : (prog === 'bulking'
+          ? ' lalu ditambah surplus 300 (bulking)'
+          : (prog === 'maintenance' ? ' (maintenance, pas kebutuhan)' : ''));
+      lines.push(`Target dihitung dari datamu: BB ${esc(user.weight)} kg · TB ${esc(user.height)} cm · umur ${esc(user.age)} th · aktivitas ${esc(actLabel)} → kebutuhan ±${tdee} kkal,${adj} → target ${cal} kkal/hari.`);
+    } else {
+      lines.push('Lengkapi profil & program dulu biar target dihitung otomatis. Kamu tetap bisa set sendiri di tab Makan.');
+    }
+    lines.push('Angka ikut diperbarui tiap kamu update BB mingguan atau ganti program.');
+    panel.innerHTML = `<ul>${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
   }
 
   async function render() {
@@ -25,6 +85,7 @@ const DASHBOARD = (() => {
     document.getElementById('calIn').textContent = Math.round(calIn);
     document.getElementById('calBurn').textContent = Math.round(calBurn);
     document.getElementById('calTarget').textContent = goal.cal || 2000;
+    renderCalHelp(goal, user);
 
     const last = SLEEP.lastNight();
     if (last) {

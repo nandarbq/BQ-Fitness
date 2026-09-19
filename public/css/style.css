@@ -137,9 +137,10 @@ h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
   background:linear-gradient(155deg, var(--red-soft) 0%, var(--surface) 52%, var(--surface-2) 100%);
   border:1px solid var(--border);
   border-radius:var(--r3); padding:22px 20px;
-  display:flex; align-items:center; gap:18px;
+  display:flex; flex-direction:column; align-items:stretch; gap:0;
   box-shadow:var(--shadow);
 }
+.ring-main{display:flex; align-items:center; gap:18px;}
 .ring-wrap{position:relative; width:138px; height:138px; flex-shrink:0;}
 .ring-svg{transform:rotate(-90deg); width:138px; height:138px;}
 .ring-bg{fill:none; stroke:var(--border); stroke-width:12;}
@@ -160,6 +161,24 @@ h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
 .ring-stat:last-child{border-bottom:none; padding-bottom:0;}
 .ring-stat span{font-weight:700; font-family:var(--font-display); font-size:18px;}
 .ring-stat small{color:var(--text-muted); font-size:11.5px;}
+
+.ring-caption-row{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-top:12px;}
+.ring-caption{font-size:11.5px; line-height:1.5; color:var(--text-muted); flex:1;}
+.ring-caption b{color:var(--text);}
+.help-chip{
+  flex-shrink:0; width:22px; height:22px; border-radius:50%;
+  border:1px solid var(--border); background:var(--surface);
+  color:var(--text-muted); font-weight:700; font-size:13px; line-height:1;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:all .15s ease;
+}
+.help-chip:hover{color:var(--red); border-color:var(--red);}
+.help-chip.active{background:var(--red); border-color:var(--red); color:#fff;}
+.cal-help{
+  margin-top:10px; background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--r1); padding:12px 14px; font-size:12px;
+}
+.cal-help ul{margin:0; padding-left:16px; display:flex; flex-direction:column; gap:6px; line-height:1.55; color:var(--text-muted);}
 
 /* ============ STAT GRID ============ */
 .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px;}
