@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await bootstrapApp();
   });
 
+  // Jaring pengaman: bila redirect OAuth nyasar ke halaman utama
+  // (mis. karena APP_URL belum ter-set dengan benar), token tetap diproses.
+  const oauthViaHash = await handleOAuthCallback();
+
   if (API.isAuthed()) {
     try {
       await API.fetchMe();
@@ -16,6 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } else {
     AUTH_UI.show();
+    if (oauthViaHash === false) {
+      const err = document.getElementById('authError');
+      if (err) err.textContent = 'Login Google gagal. Silakan coba lagi.';
+    }
   }
 
   if ('serviceWorker' in navigator) {
@@ -37,6 +45,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 let appBootstrapped = false;
+
+/* Baca token OAuth dari URL hash (#access_token=...), finalisasi ke server,
+ * lalu simpan sesi. Mengembalikan true=berhasil, false=gagal, null=tidak ada hash. */
+async function handleOAuthCallback() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const accessToken = h.get('access_token');
+  if (!accessToken) return null;
+  const sessionPayload = { access_token: accessToken };
+  const refreshToken = h.get('refresh_token');
+  if (refreshToken) sessionPayload.refresh_token = refreshToken;
+  const expiresAt = Number(h.get('expires_at') || 0);
+  if (expiresAt) sessionPayload.expires_at = expiresAt;
+  history.replaceState(null, '', location.pathname + location.search);
+
+  try {
+    const res = await fetch('/api/auth/google/finalize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session: sessionPayload })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.session) return false;
+    API.applyOAuthSession(data.session, data.user);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 async function bootstrapApp() {
   initProfile();

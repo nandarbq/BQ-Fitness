@@ -18,6 +18,7 @@ const API = (() => {
   }
   function isAuthed() { return !!session && !!session.access_token; }
   function getUser() { return currentUser; }
+  function applyOAuthSession(s, user) { setSession(s, user); }
 
   async function refreshSession() {
     if (!session || !session.refresh_token) return false;
@@ -187,6 +188,7 @@ const API = (() => {
 
   return {
     isAuthed, getUser, register, login, googleStart, fetchMe, logout, saveProfile, setUser,
+    applyOAuthSession,
     resetPassword, updatePassword,
     getProgram, onboard, updateWeight, switchProgram, saveSchedule, saveIntensity,
     getWorkouts, addWorkout, deleteWorkout,
