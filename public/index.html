@@ -74,6 +74,9 @@
     <path d="M12 5v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     <path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
   </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
   <symbol id="i-close" viewBox="0 0 24 24">
     <path d="M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     <path d="m6 6 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -434,42 +437,20 @@
       <div class="view-head">
         <div>
           <h1>Makan</h1>
-          <p class="view-sub">Pantau asupan harianmu</p>
+          <p class="view-sub">Pilih saja yang kamu makan, tak perlu ikut rencana</p>
         </div>
         <input type="date" id="foodDate" class="date-input">
       </div>
 
-      <div class="macro-card">
-        <div class="macro-row">
-          <div class="macro-head">
-            <span class="macro-label"><svg class="ic"><use href="#i-flame"/></svg> Kalori makan</span>
-            <span class="macro-value"><b id="foodCalIn">0</b> / <span id="foodCalTarget">0</span> kkal</span>
-          </div>
-          <div class="macro-bar-bg"><div class="macro-bar-fg" id="calBarFg"></div></div>
+      <div class="needs-card">
+        <div class="needs-head">
+          <span class="needs-title"><svg class="ic"><use href="#i-flame"/></svg> Kebutuhan harianmu</span>
+          <button id="editGoalBtn" class="pill-btn ghost small">Ubah target</button>
         </div>
-        <div class="macro-mini-grid">
-          <div class="macro-mini"><span id="proteinVal">0g</span><small>Protein</small></div>
-          <div class="macro-mini"><span id="carbVal">0g</span><small>Karbo</small></div>
-          <div class="macro-mini"><span id="fatVal">0g</span><small>Lemak</small></div>
-        </div>
+        <div class="needs-grid" id="needsGrid"></div>
       </div>
 
-      <div id="mealRecSection">
-        <div class="section-title-row">
-          <h2 class="section-title">Rekomendasi Menu</h2>
-          <span id="mealRecBadge" class="rec-badge"></span>
-          <button id="mealRecRefreshBtn" class="pill-btn ghost small"><svg class="ic"><use href="#i-refresh"/></svg> Buat ulang</button>
-        </div>
-        <p class="view-sub" id="mealRecSub">Menyusun menu sesuai kebutuhanmu…</p>
-        <div id="mealRec"></div>
-      </div>
-
-      <div id="mealSections"></div>
-
-      <div id="foodAutoNote" class="auto-note" style="display:none"></div>
-
-      <h2 class="section-title">Target Harian</h2>
-      <div class="goal-form">
+      <div id="goalFormBox" class="goal-form" style="display:none">
         <div class="goal-grid">
           <label>Kalori <input type="number" id="goalCal" class="text-input small"></label>
           <label>Protein (g) <input type="number" id="goalProtein" class="text-input small"></label>
@@ -478,6 +459,13 @@
         </div>
         <button id="saveGoalBtn" class="pill-btn"><svg class="ic"><use href="#i-target"/></svg> Simpan Target</button>
       </div>
+
+      <button id="openPickFoodBtn" class="cta-btn block food-cta"><svg class="ic"><use href="#i-plus"/></svg> Catat Makan</button>
+
+      <h2 class="section-title">Catatan hari ini</h2>
+      <div id="foodNotes"></div>
+
+      <div id="foodAutoNote" class="auto-note" style="display:none"></div>
     </section>
 
     <!-- SLEEP -->
@@ -573,21 +561,43 @@
   </div>
 </div>
 
-<!-- ADD FOOD MODAL -->
+<!-- PICK FOOD MODAL -->
 <div id="foodModal" class="modal-overlay">
   <div class="modal-sheet">
     <div class="modal-head">
-      <h2 id="foodModalTitle">Tambah Makanan</h2>
+      <h2>Pilih Makanan</h2>
       <button id="closeFoodModal" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
     </div>
-    <label>Nama makanan <input id="foodName" class="text-input"></label>
-    <label>Kalori (kkal) <input type="number" id="foodKcal" class="text-input"></label>
-    <div class="row3">
-      <label>Protein (g) <input type="number" id="foodProtein" class="text-input"></label>
-      <label>Karbo (g) <input type="number" id="foodCarb" class="text-input"></label>
-      <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
+
+    <div class="picker-toolbar">
+      <label class="picker-slot-label">Simpan sebagai
+        <select id="pickerMeal" class="text-input small"></select>
+      </label>
+      <span class="picker-tool-right">
+        <span id="pickerRecBadge" class="rec-badge" style="display:none"></span>
+        <button id="pickerRecRefresh" class="link-btn" style="display:none">Segarkan saran</button>
+      </span>
     </div>
-    <button id="saveFoodBtn" class="cta-btn"><svg class="ic"><use href="#i-plus"/></svg> Simpan</button>
+
+    <div id="pickerGroups"></div>
+
+    <button id="pickerManualBtn" class="pill-btn ghost small picker-manual-toggle"><svg class="ic"><use href="#i-plus"/></svg> Catat manual / makan seadanya</button>
+    <div id="pickerManualBox" class="picker-manual" style="display:none">
+      <label>Nama makanan <input id="foodName" class="text-input"></label>
+      <label>Kalori (kkal) <input type="number" id="foodKcal" class="text-input"></label>
+      <div class="row3">
+        <label>Protein (g) <input type="number" id="foodProtein" class="text-input"></label>
+        <label>Karbo (g) <input type="number" id="foodCarb" class="text-input"></label>
+        <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
+      </div>
+    </div>
+
+    <p id="pickerError" class="auth-error"></p>
+
+    <div class="picker-footer">
+      <span id="pickerSum" class="picker-sum">0 kkal · P0 · K0 · L0</span>
+      <button id="saveFoodBtn" class="cta-btn">Done</button>
+    </div>
   </div>
 </div>
 

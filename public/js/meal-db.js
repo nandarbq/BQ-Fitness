@@ -1,5 +1,5 @@
-/* Basis bahan makanan untuk rekomendasi MENU LURING (fallback) bila AI
- * tidak tersedia/gagal. Skema output sama dengan AI agar UI satu sumber. */
+/* Basis bahan makanan: untuk PICKER di halaman Makan (pilih makanan) dan
+ * untuk rekomendasi MENU LURING (fallback) bila AI tidak tersedia. */
 
 const MEAL_TIMES = {
   sarapan: '06.00-09.00',
@@ -11,30 +11,46 @@ const MEAL_TIMES = {
 };
 
 const FOODS = {
-  telur: { name: 'Telur rebus', unit: '2 butir', kcal: 140, protein: 12, carb: 1, fat: 10, also: ['tahu', 'tempe'] },
-  dada_ayam: { name: 'Dada ayam', unit: '100 g', kcal: 165, protein: 31, carb: 0, fat: 4, also: ['telur', 'ikan_kembung', 'sapi'] },
-  ikan_kembung: { name: 'Ikan kembung', unit: '100 g', kcal: 165, protein: 20, carb: 0, fat: 9, also: ['telur', 'dada_ayam', 'tahu'] },
-  sapi: { name: 'Daging sapi tanpa lemak', unit: '100 g', kcal: 187, protein: 26, carb: 0, fat: 9, also: ['dada_ayam', 'tempe'] },
-  tahu: { name: 'Tahu', unit: '100 g', kcal: 80, protein: 8, carb: 1, fat: 5, also: ['tempe', 'telur'] },
-  tempe: { name: 'Tempe', unit: '100 g', kcal: 195, protein: 20, carb: 8, fat: 11, also: ['tahu', 'telur'] },
-  udang: { name: 'Udang', unit: '100 g', kcal: 99, protein: 24, carb: 0, fat: 0, also: ['ikan_kembung', 'tahu'] },
-  nasi_putih: { name: 'Nasi putih', unit: '1 porsi (150 g)', kcal: 195, protein: 4, carb: 42, fat: 0, also: ['kentang', 'ubi', 'jagung'] },
-  kentang: { name: 'Kentang rebus', unit: '200 g', kcal: 172, protein: 4, carb: 39, fat: 0, also: ['nasi_putih', 'ubi', 'roti_gandum'] },
-  ubi: { name: 'Ubi jalar', unit: '200 g', kcal: 180, protein: 4, carb: 42, fat: 0, also: ['kentang', 'nasi_putih', 'jagung'] },
-  jagung: { name: 'Jagung manis', unit: '1 bonggol', kcal: 155, protein: 5, carb: 34, fat: 2, also: ['ubi', 'nasi_putih'] },
-  roti_gandum: { name: 'Roti gandum', unit: '2 potong', kcal: 150, protein: 6, carb: 27, fat: 3, also: ['oatmeal', 'kentang'] },
-  oatmeal: { name: 'Oatmeal', unit: '50 g', kcal: 190, protein: 7, carb: 32, fat: 4, also: ['roti_gandum', 'nasi_putih'] },
-  alpukat: { name: 'Alpukat', unit: '½ buah', kcal: 160, protein: 2, carb: 9, fat: 15, also: ['almond', 'selai_kacang'] },
-  almond: { name: 'Kacang almond', unit: '15 g', kcal: 86, protein: 3, carb: 3, fat: 7, also: ['selai_kacang', 'alpukat'] },
-  selai_kacang: { name: 'Selai kacang', unit: '20 g', kcal: 118, protein: 5, carb: 4, fat: 10, also: ['almond', 'alpukat'] },
-  susu: { name: 'Susu UHT', unit: '250 ml', kcal: 150, protein: 8, carb: 12, fat: 6, also: ['yogurt', 'almond'] },
-  yogurt: { name: 'Yogurt tawar', unit: '150 g', kcal: 100, protein: 6, carb: 10, fat: 2, also: ['susu', 'almond'] },
-  pisang: { name: 'Pisang', unit: '1 buah', kcal: 105, protein: 1, carb: 27, fat: 0, also: ['apel', 'jeruk'] },
-  apel: { name: 'Apel', unit: '1 buah', kcal: 95, protein: 0, carb: 25, fat: 0, also: ['pisang', 'jeruk'] },
-  jeruk: { name: 'Jeruk', unit: '1 buah', kcal: 62, protein: 1, carb: 15, fat: 0, also: ['apel', 'pisang'] },
-  brokoli: { name: 'Brokoli kukus', unit: '100 g', kcal: 34, protein: 3, carb: 7, fat: 0, also: ['bayam', 'kacang_panjang'] },
-  bayam: { name: 'Bayam tumis', unit: '100 g', kcal: 23, protein: 3, carb: 4, fat: 0, also: ['brokoli', 'kacang_panjang'] },
-  kacang_panjang: { name: 'Kacang panjang', unit: '100 g', kcal: 47, protein: 3, carb: 8, fat: 0, also: ['bayam', 'brokoli'] }
+  telur: { cat: 'protein', name: 'Telur rebus', unit: '2 butir', kcal: 140, protein: 12, carb: 1, fat: 10, also: ['tahu', 'tempe'] },
+  dada_ayam: { cat: 'protein', name: 'Dada ayam', unit: '100 g', kcal: 165, protein: 31, carb: 0, fat: 4, also: ['telur', 'ikan_kembung', 'sapi'] },
+  ayam_paha: { cat: 'protein', name: 'Paha ayam tanpa kulit', unit: '100 g', kcal: 160, protein: 19, carb: 0, fat: 9, also: ['dada_ayam', 'ikan_kembung'] },
+  ikan_kembung: { cat: 'protein', name: 'Ikan kembung', unit: '100 g', kcal: 165, protein: 20, carb: 0, fat: 9, also: ['telur', 'dada_ayam', 'tahu'] },
+  sapi: { cat: 'protein', name: 'Daging sapi tanpa lemak', unit: '100 g', kcal: 187, protein: 26, carb: 0, fat: 9, also: ['dada_ayam', 'tempe'] },
+  udang: { cat: 'protein', name: 'Udang', unit: '100 g', kcal: 99, protein: 24, carb: 0, fat: 0, also: ['ikan_kembung', 'tahu'] },
+  tahu: { cat: 'protein', name: 'Tahu', unit: '100 g', kcal: 80, protein: 8, carb: 1, fat: 5, also: ['tempe', 'telur'] },
+  tempe: { cat: 'protein', name: 'Tempe', unit: '100 g', kcal: 195, protein: 20, carb: 8, fat: 11, also: ['tahu', 'telur'] },
+  susu: { cat: 'protein', name: 'Susu UHT', unit: '250 ml', kcal: 150, protein: 8, carb: 12, fat: 6, also: ['yogurt', 'almond'] },
+  yogurt: { cat: 'protein', name: 'Yogurt tawar', unit: '150 g', kcal: 100, protein: 6, carb: 10, fat: 2, also: ['susu', 'almond'] },
+  nasi_putih: { cat: 'karbo', name: 'Nasi putih', unit: '1 porsi (150 g)', kcal: 195, protein: 4, carb: 42, fat: 0, also: ['nasi_merah', 'kentang', 'ubi'] },
+  nasi_merah: { cat: 'karbo', name: 'Nasi merah', unit: '1 porsi (150 g)', kcal: 170, protein: 4, carb: 36, fat: 1, also: ['nasi_putih', 'ubi'] },
+  kentang: { cat: 'karbo', name: 'Kentang rebus', unit: '200 g', kcal: 172, protein: 4, carb: 39, fat: 0, also: ['nasi_putih', 'ubi', 'roti_gandum'] },
+  ubi: { cat: 'karbo', name: 'Ubi jalar', unit: '200 g', kcal: 180, protein: 4, carb: 42, fat: 0, also: ['kentang', 'nasi_putih', 'jagung'] },
+  jagung: { cat: 'karbo', name: 'Jagung manis', unit: '1 bonggol', kcal: 155, protein: 5, carb: 34, fat: 2, also: ['ubi', 'nasi_putih'] },
+  roti_gandum: { cat: 'karbo', name: 'Roti gandum', unit: '2 potong', kcal: 150, protein: 6, carb: 27, fat: 3, also: ['oatmeal', 'kentang'] },
+  oatmeal: { cat: 'karbo', name: 'Oatmeal', unit: '50 g', kcal: 190, protein: 7, carb: 32, fat: 4, also: ['roti_gandum', 'nasi_putih'] },
+  alpukat: { cat: 'lemak', name: 'Alpukat', unit: '½ buah', kcal: 160, protein: 2, carb: 9, fat: 15, also: ['almond', 'selai_kacang'] },
+  almond: { cat: 'lemak', name: 'Kacang almond', unit: '15 g', kcal: 86, protein: 3, carb: 3, fat: 7, also: ['selai_kacang', 'alpukat'] },
+  selai_kacang: { cat: 'lemak', name: 'Selai kacang', unit: '20 g', kcal: 118, protein: 5, carb: 4, fat: 10, also: ['almond', 'alpukat'] },
+  minyak_zaitun: { cat: 'lemak', name: 'Minyak zaitun', unit: '15 g (1 sdm)', kcal: 132, protein: 0, carb: 0, fat: 15, also: ['almond', 'selai_kacang'] },
+  pisang: { cat: 'sayurbuah', name: 'Pisang', unit: '1 buah', kcal: 105, protein: 1, carb: 27, fat: 0, also: ['apel', 'jeruk'] },
+  apel: { cat: 'sayurbuah', name: 'Apel', unit: '1 buah', kcal: 95, protein: 0, carb: 25, fat: 0, also: ['pisang', 'jeruk'] },
+  jeruk: { cat: 'sayurbuah', name: 'Jeruk', unit: '1 buah', kcal: 62, protein: 1, carb: 15, fat: 0, also: ['apel', 'pisang'] },
+  brokoli: { cat: 'sayurbuah', name: 'Brokoli kukus', unit: '100 g', kcal: 34, protein: 3, carb: 7, fat: 0, also: ['bayam', 'kacang_panjang'] },
+  bayam: { cat: 'sayurbuah', name: 'Bayam tumis', unit: '100 g', kcal: 23, protein: 3, carb: 4, fat: 0, also: ['brokoli', 'kacang_panjang'] },
+  kacang_panjang: { cat: 'sayurbuah', name: 'Kacang panjang', unit: '100 g', kcal: 47, protein: 3, carb: 8, fat: 0, also: ['bayam', 'brokoli'] },
+  wortel: { cat: 'sayurbuah', name: 'Wortel', unit: '1 buah', kcal: 41, protein: 1, carb: 10, fat: 0, also: ['kacang_panjang', 'brokoli'] },
+  tomat: { cat: 'sayurbuah', name: 'Tomat', unit: '1 buah', kcal: 18, protein: 1, carb: 4, fat: 0, also: ['wortel', 'bayam'] }
+};
+
+/* Katalog untuk Picker: urutan grup & anggota. Opsi "AI" ditandai pada
+ * elemen yang jadi rekomendasi menu AI hari ini. */
+const FOOD_CATALOG = {
+  groups: [
+    { key: 'protein', label: 'Protein', note: 'bangun & jaga otot', ids: ['telur', 'dada_ayam', 'ayam_paha', 'ikan_kembung', 'sapi', 'udang', 'tahu', 'tempe', 'susu', 'yogurt'] },
+    { key: 'karbo', label: 'Karbohidrat', note: 'sumber energi utama', ids: ['nasi_putih', 'nasi_merah', 'roti_gandum', 'oatmeal', 'kentang', 'ubi', 'jagung'] },
+    { key: 'lemak', label: 'Lemak', note: 'hormon & rasa kenyang', ids: ['alpukat', 'almond', 'selai_kacang', 'minyak_zaitun'] },
+    { key: 'sayurbuah', label: 'Sayur & Buah', note: 'serat, vitamin & antioksidan', ids: ['brokoli', 'bayam', 'kacang_panjang', 'wortel', 'tomat', 'pisang', 'apel', 'jeruk'] }
+  ]
 };
 
 function recommendationFrequency(cal) {
@@ -120,3 +136,5 @@ function buildFallbackPlan(goals) {
 }
 
 window.MEAL_RECOMMEND = { recommendationFrequency, slotKeys, buildFallbackPlan };
+window.FOOD_CATALOG = FOOD_CATALOG;
+window.FOODS = FOODS;
