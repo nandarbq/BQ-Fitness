@@ -553,8 +553,13 @@
       <label>Berat badan (kg) <input type="number" id="profWeight" class="text-input"></label>
       <label>Tinggi badan (cm) <input type="number" id="profHeight" class="text-input"></label>
     </div>
-    <label>Tanggal lahir <input type="date" id="profBirthdate" class="text-input">
-      <small id="profAgeHint" class="field-hint"></small></label>
+    <p class="field-label">Tanggal lahir</p>
+    <div class="dob-row">
+      <select id="profDay" class="dob-select" aria-label="Hari"></select>
+      <select id="profMonth" class="dob-select" aria-label="Bulan"></select>
+      <select id="profYear" class="dob-select" aria-label="Tahun"></select>
+    </div>
+    <small id="profAgeHint" class="field-hint"></small>
     <label>Target jam tidur <input type="number" step="0.5" id="profSleepTarget" class="text-input"></label>
     <button id="saveProfileBtn" class="cta-btn">Simpan</button>
     <button id="logoutBtn" class="logout-btn"><svg class="ic"><use href="#i-logout"/></svg> Keluar</button>
@@ -651,8 +656,13 @@
         <button data-v="wanita" class="seg-btn">Wanita</button>
       </div>
 
-      <label>Tanggal lahir <input type="date" id="obBirthdate" class="text-input" max="">
-        <small id="obAgeHint" class="field-hint"></small></label>
+<p class="field-label">Tanggal lahir</p>
+      <div class="dob-row">
+        <select id="obDay" class="dob-select" aria-label="Hari"></select>
+        <select id="obMonth" class="dob-select" aria-label="Bulan"></select>
+        <select id="obYear" class="dob-select" aria-label="Tahun"></select>
+      </div>
+      <small id="obAgeHint" class="field-hint"></small>
       <div class="row2">
         <label>Berat (kg) <input type="number" id="obWeight" class="text-input" min="30" max="300"></label>
         <label>Tinggi (cm) <input type="number" id="obHeight" class="text-input" min="100" max="250"></label>
@@ -729,6 +739,7 @@
 <script src="js/meal-db.js"></script>
 <script src="js/exercise-demo.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/dob.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/auth-ui.js"></script>
 <script src="js/dashboard.js"></script>

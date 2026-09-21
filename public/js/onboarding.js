@@ -83,7 +83,7 @@ const ONBOARDING = (() => {
 
   /* ---- Preview rekomendasi (mirror logika server, cukup untuk tampilan) ---- */
   function readData() {
-    const birthdate = document.getElementById('obBirthdate').value;
+    const birthdate = DOB.read('ob');
     const age = calcAge(birthdate);
     const weight = parseFloat(document.getElementById('obWeight').value);
     const height = parseFloat(document.getElementById('obHeight').value);
@@ -91,14 +91,16 @@ const ONBOARDING = (() => {
   }
 
   function bindBirthdate() {
-    const input = document.getElementById('obBirthdate');
-    if (!input) return;
+    const dobInit = DOB.init('ob', (API.getUser() || {}).birthdate);
     const hint = document.getElementById('obAgeHint');
     const update = () => {
-      const age = calcAge(input.value);
+      const age = calcAge(DOB.read('ob'));
       if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
     };
-    input.addEventListener('input', update);
+    ['obDay', 'obMonth', 'obYear'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', update);
+    });
     update();
   }
 
