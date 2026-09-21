@@ -19,6 +19,10 @@ create table if not exists public.profiles (
   created_at     timestamptz default now()
 );
 
+-- Kolom tambahan untuk tabel profiles yang sudah terlanjur dibuat
+-- versi lama (create table if not exists TIDAK menambahkan kolom).
+alter table public.profiles add column if not exists birthdate date;
+
 create table if not exists public.weight_logs (
   id         bigint generated always as identity primary key,
   user_id    uuid not null references auth.users(id) on delete cascade,
