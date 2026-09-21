@@ -8,8 +8,8 @@
     trigger: document.getElementById(prefix + 'Dob'),
     label: document.getElementById(prefix + 'DobLabel'),
     cal: document.getElementById(prefix + 'Calendar'),
-    title: document.getElementById(prefix + 'CalTitle'),
     grid: document.getElementById(prefix + 'CalGrid'),
+    monthSel: document.getElementById(prefix + 'CalMonth'),
     yearSel: document.getElementById(prefix + 'CalYear'),
     prev: document.getElementById(prefix + 'CalPrev'),
     next: document.getElementById(prefix + 'CalNext')
@@ -21,17 +21,24 @@
     return `${d} ${MONTHS[m - 1]} ${y}`;
   };
 
-  function fillYears(sel, viewY) {
+  function fillHead(els) {
+    if (!els.monthSel.options.length) {
+      MONTHS.forEach((m, i) => {
+        const o = document.createElement('option');
+        o.value = String(i + 1);
+        o.textContent = m;
+        els.monthSel.appendChild(o);
+      });
+    }
     const cur = new Date().getFullYear();
-    if (!sel.options.length) {
+    if (!els.yearSel.options.length) {
       for (let yr = cur; yr >= cur - 90; yr--) {
         const o = document.createElement('option');
         o.value = String(yr);
         o.textContent = String(yr);
-        sel.appendChild(o);
+        els.yearSel.appendChild(o);
       }
     }
-    sel.value = String(viewY);
   }
 
   function render(prefix) {
@@ -39,9 +46,8 @@
     if (!st) return;
     const el = st.els;
     el.grid.innerHTML = '';
-    st.titleHTML = MONTHS[st.viewM] + ' ' + st.viewY;
-    el.title.textContent = st.titleHTML;
-    fillYears(el.yearSel, st.viewY);
+    el.monthSel.value = String(st.viewM + 1);
+    el.yearSel.value = String(st.viewY);
 
     const today = new Date();
     const firstDow = new Date(st.viewY, st.viewM, 1).getDay();
@@ -57,9 +63,10 @@
       if (day < 1) {
         const pm = st.viewM === 0 ? 11 : st.viewM - 1;
         const py = st.viewM === 0 ? st.viewY - 1 : st.viewY;
-        cell.textContent = new Date(py, pm + 1, 0).getDate() + day;
+        const pdl = new Date(py, pm + 1, 0).getDate();
+        cell.textContent = pdl + day;
         cell.classList.add('muted');
-        const iso = `${py}-${pad(pm + 1)}-${pad(new Date(py, pm + 1, 0).getDate() + day)}`;
+        const iso = `${py}-${pad(pm + 1)}-${pad(pdl + day)}`;
         cell.addEventListener('click', () => {
           st.viewM = pm; st.viewY = py;
           select(prefix, iso);
@@ -118,12 +125,33 @@
     const cur = new Date();
     states[prefix] = { els, viewY: cur.getFullYear(), viewM: cur.getMonth(), selected: '' };
     const st = states[prefix];
+    fillHead(els);
 
-    els.trigger.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); open(prefix); });
-    els.prev.addEventListener('click', e => { e.stopPropagation(); st.viewM--; if (st.viewM < 0) { st.viewM = 11; st.viewY--; } render(prefix); });
-    els.next.addEventListener('click', e => { e.stopPropagation(); st.viewM++; if (st.viewM > 11) { st.viewM = 0; st.viewY++; } render(prefix); });
-    els.yearSel.addEventListener('change', e => { e.stopPropagation(); st.viewY = Number(els.yearSel.value); render(prefix); });
-    document.addEventListener('click', () => { if (states[prefix]) states[prefix].els.cal.hidden = true; });
+    els.trigger.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      open(prefix);
+    });
+    els.prev.addEventListener('click', e => {
+      e.stopPropagation();
+      st.viewM--; if (st.viewM < 0) { st.viewM = 11; st.viewY--; }
+      render(prefix);
+    });
+    els.next.addEventListener('click', e => {
+      e.stopPropagation();
+      st.viewM++; if (st.viewM > 11) { st.viewM = 0; st.viewY++; }
+      render(prefix);
+    });
+    els.monthSel.addEventListener('change', () => { st.viewM = Number(els.monthSel.value) - 1; render(prefix); });
+    els.yearSel.addEventListener('change', () => { st.viewY = Number(els.yearSel.value); render(prefix); });
+
+    document.addEventListener('click', e => {
+      const s = states[prefix];
+      if (!s) return;
+      const t = e.target;
+      if (t && t.closest && (t.closest('.cal-wrap') || t.closest('.dob-trigger'))) return;
+      s.els.cal.hidden = true;
+    });
 
     if (iso) setValue(prefix, iso);
     else setValue(prefix, '');

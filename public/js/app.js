@@ -103,11 +103,15 @@ function initProfile() {
   document.getElementById('profSleepTarget').value = p.sleepTarget || 8;
   DOB.init('prof', p.birthdate || '');
   const hint = document.getElementById('profAgeHint');
+  const updateHint = () => {
+    const age = calcAge(DOB.read('prof'));
+    if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : 'Wajib diisi — pilih tanggal lahir kamu.';
+  };
   document.addEventListener('bq:dobchange', (e) => {
     if (e && e.detail && e.detail.prefix !== 'prof') return;
-    const age = calcAge(DOB.read('prof'));
-    if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
+    updateHint();
   });
+  updateHint();
 
   const saveBtn = document.getElementById('saveProfileBtn');
   const freshBtn = saveBtn.cloneNode(true);
@@ -120,7 +124,8 @@ function initProfile() {
       sleepTarget: parseFloat(document.getElementById('profSleepTarget').value) || 8
     };
     const birthVal = DOB.read('prof');
-    if (birthVal) profile.birthdate = birthVal;
+    if (!birthVal) { alert('Tanggal lahir wajib diisi.'); return; }
+    profile.birthdate = birthVal;
     try {
       await API.saveProfile(profile);
       NAV.closeModal('profileModal');
