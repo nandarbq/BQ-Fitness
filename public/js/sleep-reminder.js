@@ -90,6 +90,21 @@ const SLEEP_REMINDER = (() => {
     return audio;
   }
 
+  // Pastikan AudioContext benar-benar berjalan. Autoplay policy membuat
+  // konteks berawal "suspended" — tanpa resume yang di-await, nada bisa senyap.
+  // Mengembalikan true bila audio siap berbunyi.
+  function ensureRunning(a) {
+    return Promise.resolve()
+      .then(() => {
+        if (a.ctx.state === 'suspended') {
+          const p = a.ctx.resume();
+          if (p && typeof p.then === 'function') return p;
+        }
+      })
+      .then(() => a.ctx.state === 'running')
+      .catch(() => false);
+  }
+
   function note(freq, at, dur, vol, type) {
     const a = ensureAudio();
     if (!a) return;
@@ -127,41 +142,45 @@ const SLEEP_REMINDER = (() => {
   // Melodi lembut slow (C pentatonik) — nada pengantar tidur.
   function playLullaby(auto) {
     const a = ensureAudio();
-    if (!a) { alert('Browser tidak mendukung audio internal.'); return false; }
-    if (a.ctx.state === 'suspended') a.ctx.resume();
-    stopAll();
-    const dur = auto ? 60 : 16;
-    const scale = [523.25, 587.33, 659.25, 783.99, 880.00];
-    const seq = [0, 1, 2, 1, 3, 2, 4, 3, 2, 1, 0, 1];
-    const step = 0.82;
-    for (let i = 0; i * step < dur; i++) {
-      const idx = seq[i % seq.length];
-      note(scale[idx], i * step, 0.85, 0.5);
-      if (i % 2 === 0) note(scale[idx] * 2, i * step, 0.5, 0.14);
-    }
-    scheduleUntilCheck(a.ctx.currentTime + dur);
-    showBar('lullaby');
-    return true;
+    if (!a) { alert('Browser tidak mendukung audio internal.'); return Promise.resolve(false); }
+    return ensureRunning(a).then(running => {
+      if (!running) return false;
+      stopAll();
+      const dur = auto ? 60 : 16;
+      const scale = [523.25, 587.33, 659.25, 783.99, 880.00];
+      const seq = [0, 1, 2, 1, 3, 2, 4, 3, 2, 1, 0, 1];
+      const step = 0.82;
+      for (let i = 0; i * step < dur; i++) {
+        const idx = seq[i % seq.length];
+        note(scale[idx], i * step, 0.85, 0.5);
+        if (i % 2 === 0) note(scale[idx] * 2, i * step, 0.5, 0.14);
+      }
+      scheduleUntilCheck(a.ctx.currentTime + dur);
+      showBar('lullaby');
+      return true;
+    });
   }
 
   // Dengung dua nada berulang — alarm bangun.
   function playWakeAlarm(auto) {
     const a = ensureAudio();
-    if (!a) { alert('Browser tidak mendukung audio internal.'); return false; }
-    if (a.ctx.state === 'suspended') a.ctx.resume();
-    stopAll();
-    a.master.gain.value = 0.3;
-    const dur = auto ? 45 : 12;
-    const until = a.ctx.currentTime + dur;
-    const tones = [880, 659.25];
-    let i = 0;
-    while (a.ctx.currentTime + i * 0.55 < until) {
-      note(tones[i % 2], i * 0.55, 0.4, 0.9, 'sine');
-      i++;
-    }
-    scheduleUntilCheck(until);
-    showBar('wake');
-    return true;
+    if (!a) { alert('Browser tidak mendukung audio internal.'); return Promise.resolve(false); }
+    return ensureRunning(a).then(running => {
+      if (!running) return false;
+      stopAll();
+      a.master.gain.value = 0.12;
+      const dur = auto ? 45 : 12;
+      const until = a.ctx.currentTime + dur;
+      const tones = [880, 659.25];
+      let i = 0;
+      while (a.ctx.currentTime + i * 0.55 < until) {
+        note(tones[i % 2], i * 0.55, 0.4, 0.9, 'sine');
+        i++;
+      }
+      scheduleUntilCheck(until);
+      showBar('wake');
+      return true;
+    });
   }
 
   function stopTone() { stopAll(); hideBar('lullaby'); hideBar('wake'); }
