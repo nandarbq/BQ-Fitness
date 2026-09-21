@@ -95,7 +95,7 @@ const ONBOARDING = (() => {
     const hint = document.getElementById('obAgeHint');
     const update = () => {
       const age = calcAge(DOB.read('ob'));
-      if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : 'Wajib diisi — pilih tanggal lahir kamu.';
+      if (hint) hint.textContent = age != null ? '' : 'Wajib diisi — pilih tanggal lahir kamu.';
     };
     document.addEventListener('bq:dobchange', (e) => {
       if (e && e.detail && e.detail.prefix !== 'ob') return;

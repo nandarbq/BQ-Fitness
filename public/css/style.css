@@ -260,16 +260,16 @@ h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
 .cal-head{display:flex; align-items:center; gap:8px;}
 .cal-nav{width:34px; height:34px; flex:0 0 auto; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:18px; line-height:1; cursor:pointer; font-family:inherit;}
 .cal-nav:active{transform:scale(.95);}
-.cal-month{
-  flex:1; min-width:0; padding:7px 8px; border-radius:10px; border:1px solid var(--border);
-  background:var(--bg); color:var(--text); font-size:12.5px; font-weight:700; font-family:inherit;
-  appearance:none; -webkit-appearance:none; cursor:pointer;
+.cal-month, .cal-year{
+  height:38px; padding:0 26px 0 12px; border-radius:11px; border:1.5px solid var(--border);
+  background:var(--bg) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center/10px;
+  color:var(--text); font-size:12.5px; font-weight:700; font-family:inherit; cursor:pointer;
+  appearance:none; -webkit-appearance:none; text-align:center;
+  transition:border-color .2s ease, box-shadow .2s ease;
 }
-.cal-year{
-  flex:0 0 auto; padding:7px 8px; border-radius:10px; border:1px solid var(--border);
-  background:var(--bg); color:var(--text); font-size:12.5px; font-weight:700; font-family:inherit;
-  appearance:none; -webkit-appearance:none; cursor:pointer;
-}
+.cal-month:focus, .cal-year:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 3px var(--red-soft);}
+.cal-month{flex:1 1 auto; min-width:0;}
+.cal-year{flex:0 0 auto; width:96px;}
 .cal-dow{display:grid; grid-template-columns:repeat(7,1fr); margin-top:10px;}
 .cal-dow span{text-align:center; font-size:10.5px; font-weight:700; color:var(--text-muted); letter-spacing:.4px;}
 .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-top:4px;}
