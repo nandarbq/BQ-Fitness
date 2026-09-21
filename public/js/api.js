@@ -41,11 +41,21 @@ const API = (() => {
   async function request(method, path, body) {
     const headers = { 'Content-Type': 'application/json' };
     if (session && session.access_token) headers['Authorization'] = 'Bearer ' + session.access_token;
-    const res = await fetch(BASE + path, {
-      method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    let res;
+    try {
+      res = await fetch(BASE + path, {
+        method,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: controller.signal
+      });
+    } catch (e) {
+      clearTimeout(timer);
+      throw new Error('Permintaan terlalu lama. Periksa koneksi lalu coba lagi.');
+    }
+    clearTimeout(timer);
     let data = {};
     try { data = await res.json(); } catch (e) { /* no body */ }
 

@@ -16,6 +16,8 @@ const FOOD = (() => {
   let goalCache = { cal: 2000, protein: 120, carb: 220, fat: 60 };
   let todayCalCache = 0;
   let recState = { source: null, plan: null, busy: false };
+  let recLoaded = false;
+  const REC_CACHE_KEY = 'bq_ai_meal_v1';
 
   function normalizeMealKey(meal) {
     return meal === 'camilan' ? 'camilan_sore' : meal;
@@ -59,12 +61,45 @@ const FOOD = (() => {
       updatePickerToolbar();
     });
 
+    // Saran AI tidak memblokir app: muat dari cache lokal bila ada (instan),
+    // sisanya baru diambil saat halaman Makan dibuka pertama kali.
+    hydrateRecFromCache();
+    updatePickerToolbar();
+
+    window.addEventListener('bq:viewchange', (e) => {
+      if (e.detail.id === 'view-food' && !recLoaded) {
+        recLoaded = true;
+        loadRecommendation().then(() => {
+          updatePickerToolbar();
+          const modal = document.getElementById('foodModal');
+          if (modal && modal.classList.contains('open')) renderPickerGroups();
+        });
+      }
+    });
+
     await loadGoal();
     await loadLogs();
     render();
     renderAutoNote();
     await refreshTodayCal();
-    await loadRecommendation();
+  }
+
+  function hydrateRecFromCache() {
+    try {
+      const raw = localStorage.getItem(REC_CACHE_KEY);
+      if (!raw) return;
+      const rec = JSON.parse(raw);
+      if (!rec || rec.date !== API.todayISO() || !rec.payload) return;
+      recState.plan = rec.payload;
+      recState.source = rec.source === 'ai' ? 'ai' : 'fallback';
+      recLoaded = true;
+    } catch (e) { /* abaikan cache korup */ }
+  }
+
+  function cacheTodayPlan(payload) {
+    try {
+      localStorage.setItem(REC_CACHE_KEY, JSON.stringify({ date: API.todayISO(), payload, source: 'ai' }));
+    } catch (e) { /* kuota penuh dsb — abaikan */ }
   }
 
   /* ---- Picker "Pilih Makanan" ---- */
@@ -222,13 +257,14 @@ const FOOD = (() => {
     if (!plan) plan = MEAL_RECOMMEND.buildFallbackPlan(goalCache);
     recState.plan = plan;
     recState.source = source === 'ai' ? 'ai' : 'fallback';
+    if (source === 'ai' && plan) cacheTodayPlan(plan);
   }
 
   async function refreshRecommendation() {
     if (recState.busy || !window.MEAL_RECOMMEND) return;
     recState.busy = true;
     const btn = document.getElementById('pickerRecRefresh');
-    if (btn) btn.disabled = true;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
     try {
       let plan = null, source = 'fallback';
       try {
@@ -242,9 +278,10 @@ const FOOD = (() => {
       if (!plan) plan = MEAL_RECOMMEND.buildFallbackPlan(goalCache);
       recState.plan = plan;
       recState.source = source === 'ai' ? 'ai' : 'fallback';
+      if (source === 'ai' && plan) cacheTodayPlan(plan);
     } finally {
       recState.busy = false;
-      if (btn) btn.disabled = false;
+      if (btn) { btn.disabled = false; btn.textContent = 'Segarkan saran'; }
     }
   }
 
