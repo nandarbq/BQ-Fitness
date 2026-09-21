@@ -824,6 +824,12 @@ body.no-scroll{overflow:hidden;}
 .needs-tile .needs-val em{font-style:normal; font-size:12px; color:var(--text-muted); letter-spacing:.4px;}
 .needs-tile small{display:block; font-size:11px; color:var(--text-muted); font-weight:600; margin-top:3px;}
 .needs-tile small b{color:var(--text);}
+.timing-card{margin-top:12px;}
+.timing-list{display:grid; gap:6px;}
+.timing-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:12px;}
+.timing-row.now{border-color:var(--red); background:var(--red-soft);}
+.timing-name{font-size:12.5px; font-weight:700; color:var(--text);}
+.timing-hour{font-size:12px; font-weight:800; font-family:var(--font-display); color:var(--red); letter-spacing:.3px;}
 
 .goal-form{margin:12px 0 4px; display:grid; gap:12px;}
 .goal-form .pill-btn{justify-self:start;}

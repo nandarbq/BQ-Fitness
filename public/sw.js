@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bq-fitness-v21';
+const CACHE_NAME = 'bq-fitness-v22';
 const APP_SHELL = [
   './',
   './index.html',

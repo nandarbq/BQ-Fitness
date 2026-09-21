@@ -387,7 +387,23 @@ const FOOD = (() => {
         <span class="needs-val">${fmt(t.need)} <em>${t.unit}</em></span>
         <small>Termakan <b>${fmt(t.have)} ${t.unit}</b></small>
       </div>`).join('');
+    renderTiming();
     renderNotes();
+  }
+
+  function renderTiming() {
+    const wrap = document.getElementById('mealTimingList');
+    if (!wrap) return;
+    const keys = activeMealKeys().slice().sort((a, b) => MEAL_ORDER.indexOf(a) - MEAL_ORDER.indexOf(b));
+    const nowKey = autoSlot();
+    if (!keys.length) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = keys.map(k => {
+      const meta = SLOT_META[k] || { label: k, time: '' };
+      return `<div class="timing-row${k === nowKey ? ' now' : ''}">
+        <span class="timing-name">${meta.label}</span>
+        <span class="timing-hour">${meta.time || '—'}</span>
+      </div>`;
+    }).join('');
   }
 
   function renderNotes() {
