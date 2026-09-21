@@ -153,6 +153,10 @@
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M13.7 21a2 2 0 0 1-3.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
   </symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24">
+    <rect x="9" y="9" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
   <symbol id="i-cal" viewBox="0 0 24 24">
     <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
     <line x1="16" y1="2" x2="16" y2="6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -506,30 +510,31 @@
 
       <div class="sleep-alarm-card">
         <div class="alarm-head">
-          <span class="alarm-title"><svg class="ic"><use href="#i-bell"/></svg> Pengingat tidur</span>
+          <span class="alarm-title"><svg class="ic"><use href="#i-bell"/></svg> Alarm Tidur Mingguan</span>
           <label class="switch" for="alarmToggle">
             <input type="checkbox" id="alarmToggle">
             <span class="slider"></span>
           </label>
         </div>
-        <div class="alarm-body">
-          <label class="alarm-time-label">Ingatkan saya
-            <input type="time" id="alarmTime" class="text-input small">
-          </label>
-          <div class="alarm-meta">
-            <p>Saat waktunya tiba kamu dapat <b>notifikasi</b> + <b>nada pengantar tidur</b> yang menenangkan selama 1 menit.</p>
-            <div class="alarm-actions">
-              <button id="alarmTestBtn" class="pill-btn ghost small"><svg class="ic"><use href="#i-play"/></svg> Uji nada</button>
-              <button id="alarmStopBtn" class="pill-btn ghost small" style="display:none"><svg class="ic"><use href="#i-stop"/></svg> Hentikan nada</button>
-            </div>
-          </div>
+        <p class="alarm-sub">Setel jam <b>tidur</b> & <b>bangun</b> untuk tiap hari. Saat jam tidur tiba, <b>nada pengantar tidur</b> berbunyi otomatis; saat jam bangun, <b>alarm bangun</b> berbunyi.</p>
+        <div id="scheduleList" class="schedule-list"></div>
+        <button id="copyAllBtn" class="link-btn"><svg class="ic"><use href="#i-copy"/></svg> Salin jam Senin ke semua hari</button>
+        <div class="schedule-rules">
+          <svg class="ic"><use href="#i-spark"/></svg>
+          <span>Ruang sehat: tidur <b>19:00–02:00</b> · bangun <b>04:30–09:59</b> · durasi <b>6–10 jam</b>.</span>
         </div>
+        <button id="saveAlarmBtn" class="pill-btn block"><svg class="ic"><use href="#i-check"/></svg> Simpan Jadwal</button>
+        <p id="alarmError" class="auth-error"></p>
         <p id="alarmStatus" class="alarm-status"></p>
       </div>
 
       <div id="lullabyBar" class="lullaby-bar" style="display:none">
         <span class="lullaby-eq"><svg class="ic"><use href="#i-moon"/></svg> Pengantar tidur sedang berbunyi</span>
         <button id="lullabyStopBtn" class="pill-btn small"><svg class="ic"><use href="#i-stop"/></svg> Hentikan</button>
+      </div>
+      <div id="wakeBar" class="lullaby-bar wake" style="display:none">
+        <span class="lullaby-eq"><svg class="ic"><use href="#i-sun"/></svg> Waktunya bangun — alarm berbunyi</span>
+        <button id="wakeStopBtn" class="pill-btn small"><svg class="ic"><use href="#i-stop"/></svg> Hentikan</button>
       </div>
 
       <div class="sleep-log-card">

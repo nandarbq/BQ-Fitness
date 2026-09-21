@@ -1,13 +1,33 @@
-/* Pengingat tidur: notifikasi + nada pengantar tidur (WebAudio), juga meneruskan
-   konfigurasi ke service worker agar tetap berbunyi walau aplikasi ditutup. */
+/* Alarm tidur mingguan: tiap hari ada jam tidur & jam bangun dengan batas
+   rentang sehat (tidur 19:00–02:00, bangun 04:30–09:59, durasi 6–10 jam).
+   Jam tidur → nada pengantar tidur; jam bangun → alarm bangun.
+   Konfigurasi diteruskan ke service worker agar tetap jalan saat app ditutup. */
 const SLEEP_REMINDER = (() => {
   const KEY = 'bq_sleep_alarm_v1';
   const IDB_NAME = 'bq_db';
   const IDB_STORE = 'kv';
   const CHECK_MS = 15000;
 
-  let cfg = { enabled: false, time: '22:00', lastFired: '' };
+  const DAY_ORDER = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'];
+  const DAY_LABEL = { senin: 'Senin', selasa: 'Selasa', rabu: 'Rabu', kamis: 'Kamis', jumat: 'Jumat', sabtu: 'Sabtu', minggu: 'Minggu' };
+  const RANGES = {
+    sleep: { min: 19 * 60, max: 26 * 60 },   // 19:00 – 02:00 (02:00 = 26:00)
+    wake: { min: 4 * 60 + 30, max: 9 * 60 + 59 }, // 04:30 – 09:59
+    dur: { min: 6 * 60, max: 10 * 60 }        // 6 – 10 jam
+  };
+
+  let cfg = defaultCfg();
+  let edit = null;
   let audio = null;
+  let checkTimer = null;
+
+  function defaultCfg() {
+    const days = {};
+    DAY_ORDER.forEach(d => { days[d] = { on: true, sleep: '22:00', wake: '06:00' }; });
+    return { enabled: false, days, lastFired: {} };
+  }
+
+  const durStr = m => (m % 60 === 0 ? (m / 60) : (m / 60).toFixed(1).replace('.', ',')) + ' jam';
 
   /* ---------- IndexedDB (dipakai juga oleh service worker) ---------- */
   function idbOpen() {
@@ -36,194 +56,338 @@ const SLEEP_REMINDER = (() => {
   }
 
   function load() {
-    try { cfg = Object.assign({ enabled: false, time: '22:00', lastFired: '' }, JSON.parse(localStorage.getItem(KEY) || '{}')); }
-    catch (e) { /* reset ke default */ }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { saved = null; }
+    cfg = defaultCfg();
+    if (saved && saved.days && DAY_ORDER.every(d => saved.days[d])) {
+      cfg.enabled = !!saved.enabled;
+      cfg.lastFired = saved.lastFired || {};
+      DAY_ORDER.forEach(d => {
+        cfg.days[d] = Object.assign({ on: true, sleep: '22:00', wake: '06:00' }, saved.days[d]);
+      });
+    }
   }
 
   function persist() {
     try { localStorage.setItem(KEY, JSON.stringify(cfg)); } catch (e) { /* kuota */ }
+    const payload = { type: 'bq-alarm-save', cfg };
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'bq-alarm-save', cfg });
+      navigator.serviceWorker.controller.postMessage(payload);
     } else {
       idbSet('alarm', cfg);
     }
   }
 
-  /* ---------- Nada pengantar tidur ---------- */
+  /* ---------- Audio ---------- */
   function ensureAudio() {
     if (audio) return audio;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
-    audio = { ctx: new AC(), master: null, timers: [], loop: false, until: 0 };
+    audio = { ctx: new AC(), master: null, oscs: [], timers: [], until: 0 };
     audio.master = audio.ctx.createGain();
     audio.master.gain.value = 0.12;
     audio.master.connect(audio.ctx.destination);
     return audio;
   }
 
-  function note(freq, at, dur, vol) {
+  function note(freq, at, dur, vol, type) {
     const a = ensureAudio();
     if (!a) return;
     const t = a.ctx.currentTime + at;
-    const o1 = a.ctx.createOscillator();
-    const o2 = a.ctx.createOscillator();
+    const o = a.ctx.createOscillator();
     const g = a.ctx.createGain();
-    o1.type = 'sine';
-    o2.type = 'triangle';
-    o1.frequency.value = freq;
-    o2.frequency.value = freq / 2;
+    o.type = type || 'sine';
+    o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol, t + 0.06);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.04);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o1.connect(g); o2.connect(g); g.connect(a.master);
-    o1.start(t); o2.start(t);
-    o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    o.connect(g); g.connect(a.master);
+    a.oscs.push(o);
+    o.start(t); o.stop(t + dur + 0.05);
   }
 
-  // Melodi lembut slow (C pentatonik), ~0.8 detik per nada.
-  function scheduleLullaby(from, durSec) {
-    const scale = [523.25, 587.33, 659.25, 783.99, 880.00]; // C5 D5 E5 G5 A5
-    const seq = [0, 1, 2, 1, 3, 2, 4, 3, 2, 1, 0, 1];
-    const step = 0.82;
-    let i = 0;
-    while (i * step < durSec) {
-      const idx = seq[i % seq.length];
-      (() => {
-        const t = from + i * step;
-        note(scale[idx], t, 0.85, 0.5);
-        if (i % 2 === 0) note(scale[idx] * 2, t, 0.5, 0.14);
-      })();
-      i++;
+  function stopAll() {
+    if (audio) {
+      audio.timers.forEach(clearInterval); audio.timers = [];
+      audio.oscs.forEach(o => { try { o.stop(); } catch (e) { /* already stopped */ } });
+      audio.oscs = [];
+      audio.until = 0;
+      if (audio.ctx.state === 'running') audio.master.gain.value = 0.12;
     }
   }
 
+  function scheduleUntilCheck(until) {
+    const a = ensureAudio();
+    a.until = until;
+    a.timers.push(setInterval(() => {
+      if (a.ctx.currentTime >= a.until) stopAll();
+    }, 800));
+  }
+
+  // Melodi lembut slow (C pentatonik) — nada pengantar tidur.
   function playLullaby(auto) {
     const a = ensureAudio();
-    if (!a) { alert('Browser tidak mendukung audio internal.'); return; }
+    if (!a) { alert('Browser tidak mendukung audio internal.'); return false; }
     if (a.ctx.state === 'suspended') a.ctx.resume();
-    stopLullaby();
+    stopAll();
     const dur = auto ? 60 : 16;
-    a.until = a.ctx.currentTime + dur;
-    scheduleLullaby(a.ctx.currentTime + 0.05, dur);
-    a.timers.push(setInterval(() => {
-      if (a.ctx.currentTime >= a.until) stopLullaby();
-    }, 1000));
-    setPlayingUI(true);
+    const scale = [523.25, 587.33, 659.25, 783.99, 880.00];
+    const seq = [0, 1, 2, 1, 3, 2, 4, 3, 2, 1, 0, 1];
+    const step = 0.82;
+    for (let i = 0; i * step < dur; i++) {
+      const idx = seq[i % seq.length];
+      note(scale[idx], i * step, 0.85, 0.5);
+      if (i % 2 === 0) note(scale[idx] * 2, i * step, 0.5, 0.14);
+    }
+    scheduleUntilCheck(a.ctx.currentTime + dur);
+    showBar('lullaby');
     return true;
   }
 
-  function stopLullaby() {
-    if (audio) {
-      audio.timers.forEach(clearInterval);
-      audio.timers = [];
-      audio.until = 0;
+  // Dengung dua nada berulang — alarm bangun.
+  function playWakeAlarm(auto) {
+    const a = ensureAudio();
+    if (!a) { alert('Browser tidak mendukung audio internal.'); return false; }
+    if (a.ctx.state === 'suspended') a.ctx.resume();
+    stopAll();
+    a.master.gain.value = 0.3;
+    const dur = auto ? 45 : 12;
+    const until = a.ctx.currentTime + dur;
+    const tones = [880, 659.25];
+    let i = 0;
+    while (a.ctx.currentTime + i * 0.55 < until) {
+      note(tones[i % 2], i * 0.55, 0.4, 0.9, 'sine');
+      i++;
     }
-    setPlayingUI(false);
+    scheduleUntilCheck(until);
+    showBar('wake');
+    return true;
   }
 
-  function setPlayingUI(on) {
-    const bar = document.getElementById('lullabyBar');
-    const stopBtn = document.getElementById('alarmStopBtn');
-    if (bar) bar.style.display = on ? 'flex' : 'none';
-    if (stopBtn) stopBtn.style.display = on ? '' : 'none';
+  function stopTone() { stopAll(); hideBar('lullaby'); hideBar('wake'); }
+
+  /* ---------- UI bar ---------- */
+  function showBar(kind) {
+    const el = document.getElementById(kind === 'wake' ? 'wakeBar' : 'lullabyBar');
+    if (el) el.style.display = 'flex';
+  }
+  function hideBar(kind) {
+    const el = document.getElementById(kind === 'wake' ? 'wakeBar' : 'lullabyBar');
+    if (el) el.style.display = 'none';
+  }
+
+  function showNow() {
+    hideBar('lullaby'); hideBar('wake');
   }
 
   /* ---------- Notifikasi ---------- */
-  function showNotification() {
+  function showNotification(title, body) {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
     try {
-      const n = new Notification('Waktunya tidur 🌙', {
-        body: `Sudah jam ${cfg.time}. Matikan layar, redupkan lampu — pemulihan ototmu menunggu.`,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
-        tag: 'bq-sleep-reminder',
-        silent: true
-      });
+      const n = new Notification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: 'bq-sleep-alarm', silent: true });
       n.onclick = () => { window.focus(); n.close(); };
     } catch (e) { /* ignore */ }
   }
 
-  async function fire() {
-    cfg.lastFired = new Date().toISOString().slice(0, 10);
+  function fire(kind) {
+    const day = todayKey();
+    const tid = new Date().toISOString().slice(0, 10);
+    cfg.lastFired[day + ':' + kind] = tid;
     persist();
-    showNotification();
-    playLullaby(true);
+    if (kind === 'sleep') {
+      showNotification('Waktunya tidur 🌙', 'Matikan layar, redupkan lampu. Nada pengantar tidur diputar 1 menit.');
+      playLullaby(true);
+    } else {
+      showNotification('Waktunya bangun ☀️', 'Alarm bangun berbunyi — mulai hari dengan langkah ringan.');
+      playWakeAlarm(true);
+    }
+  }
+
+  function todayKey() {
+    return new Date().toLocaleDateString('id-ID', { weekday: 'long' }).toLowerCase();
   }
 
   function check() {
     if (!cfg.enabled) return;
+    const day = todayKey();
+    const dc = cfg.days[day];
+    if (!dc || !dc.on) return;
     const now = new Date();
-    if (cfg.lastFired === now.toISOString().slice(0, 10)) return;
-    const [hh, mm] = (cfg.time || '22:00').split(':').map(Number);
-    if (now.getHours() === hh && now.getMinutes() === mm) fire();
+    const tid = now.toISOString().slice(0, 10);
+    const hh = now.getHours(), mm = now.getMinutes();
+    const [sl, sm] = (dc.sleep || '22:00').split(':').map(Number);
+    const [wk, wm] = (dc.wake || '06:00').split(':').map(Number);
+    if (hh === sl && mm === sm && !cfg.lastFired[day + ':sleep']) fire('sleep');
+    if (hh === wk && mm === wm && !cfg.lastFired[day + ':wake']) fire('wake');
   }
 
-  /* ---------- UI ---------- */
+  /* ---------- Validasi rentang sehat ---------- */
+  function dayMinutes(str) {
+    const [h, m] = str.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function validateDay(day, dc) {
+    const sleepM = dayMinutes(dc.sleep);
+    const bedN = sleepM >= 19 * 60 ? sleepM : sleepM + 24 * 60; // 19:00–02:00 (02:00 = 26:00)
+    const wakeM = dayMinutes(dc.wake);
+    const wakeN = wakeM >= 12 * 60 ? wakeM : wakeM + 24 * 60;
+    const dur = wakeN - bedN;
+    const issues = [];
+    if (bedN < RANGES.sleep.min || bedN > RANGES.sleep.max || bedN >= wakeN) {
+      issues.push('jam tidur: 19:00–02:00');
+    }
+    if (wakeM < RANGES.wake.min || wakeM > RANGES.wake.max) {
+      issues.push('jam bangun: 04:30–09:59');
+    }
+    if (dur < RANGES.dur.min) issues.push('minimal 6 jam');
+    if (dur > RANGES.dur.max) issues.push('maksimal 10 jam');
+    return issues;
+  }
+
+  // Validasi & rendar row: durasi.
+  function rowDur(dc) {
+    const sleepM = dayMinutes(dc.sleep);
+    const bedN = sleepM >= 19 * 60 ? sleepM : sleepM + 24 * 60;
+    const wakeM = dayMinutes(dc.wake);
+    const wakeN = wakeM >= 12 * 60 ? wakeM : wakeM + 24 * 60;
+    const dur = wakeN - bedN;
+    return dur > 0 ? durStr(dur) : '—';
+  }
+
+  /* ---------- UI: jadwal mingguan ---------- */
+  function buildEditFromCfg() {
+    edit = {};
+    DAY_ORDER.forEach(d => { edit[d] = Object.assign({}, cfg.days[d]); });
+  }
+
+  function renderSchedule() {
+    const wrap = document.getElementById('scheduleList');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    DAY_ORDER.forEach(d => {
+      const dc = edit[d];
+      const row = document.createElement('div');
+      row.className = 'sched-row';
+      row.innerHTML = `
+        <label class="sched-on">
+          <input type="checkbox" class="sched-enable">
+          <span>${DAY_LABEL[d]}</span>
+        </label>
+        <div class="sched-times">
+          <label class="sched-t">Tidur<input type="time" class="sched-sleep"></label>
+          <label class="sched-t"><svg class="ic"><use href="#i-sun"/></svg><span>Bangun</span><input type="time" class="sched-wake"></label>
+        </div>
+        <span class="sched-dur"></span>`;
+      const on = row.querySelector('.sched-enable');
+      const sl = row.querySelector('.sched-sleep');
+      const wk = row.querySelector('.sched-wake');
+      const durEl = row.querySelector('.sched-dur');
+      on.checked = dc.on;
+      sl.value = dc.sleep;
+      wk.value = dc.wake;
+      const upd = () => {
+        dc.on = on.checked;
+        dc.sleep = sl.value || '22:00';
+        dc.wake = wk.value || '06:00';
+        durEl.textContent = dc.on ? rowDur(dc) : '—';
+        row.classList.toggle('off', !dc.on);
+      };
+      on.addEventListener('change', upd);
+      sl.addEventListener('change', upd);
+      wk.addEventListener('change', upd);
+      upd();
+      wrap.appendChild(row);
+    });
+  }
+
+  function copySeninToAll() {
+    const src = DAY_ORDER[0];
+    const s = edit[src];
+    DAY_ORDER.forEach(d => { edit[d].sleep = s.sleep; edit[d].wake = s.wake; });
+    renderSchedule();
+  }
+
   function renderStatus() {
     const toggle = document.getElementById('alarmToggle');
     const stat = document.getElementById('alarmStatus');
     if (toggle) toggle.checked = cfg.enabled;
     if (stat) {
       if (cfg.enabled) {
-        const [h, m] = (cfg.time || '').split(':');
-        stat.innerHTML = `Pengingat <b>aktif</b> pukul <b>${h}:${m}</b> · notifikasi + nada pengantar tidur 1 menit.`;
+        const n = DAY_ORDER.filter(d => cfg.days[d].on).length;
+        stat.innerHTML = `Alarm <b>aktif</b> untuk <b>${n} dari 7 hari</b> — nada tidur & alarm bangun otomatis sesuai jadwal.`;
         stat.className = 'alarm-status on';
       } else {
-        stat.textContent = 'Pengingat nonaktif — setel jam lalu nyalakan.';
+        stat.textContent = 'Alarm nonaktif — nyalakan untuk pengingat harian.';
         stat.className = 'alarm-status';
       }
     }
   }
 
+  function saveAlarm() {
+    const err = document.getElementById('alarmError');
+    err.textContent = '';
+    let problems = [];
+    DAY_ORDER.forEach(d => {
+      const dc = edit[d];
+      if (!dc.on) return;
+      validateDay(d, dc).forEach(msg => problems.push(DAY_LABEL[d] + ': ' + msg));
+    });
+    if (problems.length) {
+      err.textContent = 'Cek jadwal: ' + problems.slice(0, 2).join(' · ') + (problems.length > 2 ? ' …' : '') + '.';
+      return;
+    }
+    cfg.days = edit;
+    cfg.enabled = document.getElementById('alarmToggle').checked;
+    persist();
+    renderStatus();
+    const stat = document.getElementById('alarmStatus');
+    if (stat) { stat.textContent = 'Jadwal tersimpan ✓'; stat.className = 'alarm-status on'; }
+  }
+
   async function toggleAlarm(on) {
     cfg.enabled = on;
-    if (on) {
-      const t = document.getElementById('alarmTime');
-      if (t && t.value) cfg.time = t.value;
-    }
     if (on && 'Notification' in window && Notification.permission === 'default') {
       try { await Notification.requestPermission(); } catch (e) { /* ignored */ }
     }
-    persist();
     renderStatus();
-    if (!on) stopLullaby();
+    if (!on) stopTone();
+  }
+
+  function startCheck() {
+    if (!checkTimer && cfg.enabled) checkTimer = setInterval(check, CHECK_MS);
   }
 
   function init() {
     load();
+    buildEditFromCfg();
+
     const toggle = document.getElementById('alarmToggle');
-    const time = document.getElementById('alarmTime');
-    const testBtn = document.getElementById('alarmTestBtn');
-    const stopBtn = document.getElementById('alarmStopBtn');
+    const saveBtn = document.getElementById('saveAlarmBtn');
+    const copyAll = document.getElementById('copyAllBtn');
     const lullabyStop = document.getElementById('lullabyStopBtn');
+    const wakeStop = document.getElementById('wakeStopBtn');
 
-    if (time) time.value = cfg.time;
-    if (toggle) toggle.addEventListener('change', () => toggleAlarm(toggle.checked));
-    if (time) time.addEventListener('change', () => {
-      cfg.time = time.value;
-      if (cfg.enabled) {
-        cfg.lastFired = '';
-        persist();
-      }
-    });
-    if (testBtn) testBtn.addEventListener('click', () => {
-      if ('Notification' in window && Notification.permission === 'denied') {
-        showNotification();
-      }
-      playLullaby(false);
-    });
-    if (stopBtn) stopBtn.addEventListener('click', stopLullaby);
-    if (lullabyStop) lullabyStop.addEventListener('click', stopLullaby);
-
+    renderSchedule();
     renderStatus();
+    if (toggle) toggle.checked = cfg.enabled;
+    if (toggle) toggle.addEventListener('change', () => toggleAlarm(toggle.checked));
+    if (saveBtn) saveBtn.addEventListener('click', saveAlarm);
+    if (copyAll) copyAll.addEventListener('click', copySeninToAll);
+    if (lullabyStop) lullabyStop.addEventListener('click', stopTone);
+    if (wakeStop) wakeStop.addEventListener('click', stopTone);
+
     if (navigator.serviceWorker) {
       navigator.serviceWorker.addEventListener('message', (e) => {
-        if (e.data && e.data.type === 'bq-lullaby') playLullaby(true);
+        if (!e.data || !e.data.type) return;
+        if (e.data.type === 'bq-lullaby') playLullaby(true);
+        if (e.data.type === 'bq-wake') playWakeAlarm(true);
       });
     }
-    if (cfg.enabled) setInterval(check, CHECK_MS);
+    startCheck();
+    window.addEventListener('bq:viewchange', startCheck);
   }
 
-  return { init, playLullaby, stopLullaby };
+  return { init, playLullaby, playWakeAlarm, stopTone, todayKey, DAY_ORDER, DAY_LABEL, RANGES, rowDur };
 })();

@@ -213,10 +213,6 @@ const SLEEP = (() => {
     const bar = document.getElementById('sleepProgressBar');
     bar.style.width = s.progress + '%';
     bar.className = 'status-progress-fill ' + s.urgency;
-    const alarmTime = document.getElementById('alarmTime');
-    if (alarmTime && (!alarmTime.value || alarmTime.value === '22:00')) {
-      alarmTime.value = timeToStr(s.bedH, s.bedM);
-    }
   }
 
   function formatDate(iso) {

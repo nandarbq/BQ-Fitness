@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bq-fitness-v23';
+const CACHE_NAME = 'bq-fitness-v24';
 const APP_SHELL = [
   './',
   './index.html',
@@ -73,24 +73,48 @@ self.addEventListener('message', (event) => {
 
 function checkAlarm() {
   alarmRead().then(cfg => {
-    if (!cfg || !cfg.enabled) return;
+    if (!cfg || !cfg.enabled || !cfg.days) return;
     const now = new Date();
-    const today = now.toISOString().slice(0, 10);
-    if (cfg.lastFired === today) return;
-    const [hh, mm] = (cfg.time || '22:00').split(':').map(Number);
-    if (now.getHours() !== hh || now.getMinutes() !== mm) return;
-    cfg.lastFired = today;
-    alarmWrite('alarm', cfg);
-    self.registration.showNotification('Waktunya tidur 🌙', {
-      body: 'Sudah waktunya. Turunkan layar dan biarkan pulih — nada pengantar tidur diputar bila aplikasi terbuka.',
-      icon: './icons/icon-192.png',
-      badge: './icons/icon-192.png',
-      tag: 'bq-sleep-reminder',
-      silent: false
-    }).catch(() => {});
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      clients.forEach(c => c.postMessage({ type: 'bq-lullaby' }));
-    });
+    const tid = now.toISOString().slice(0, 10);
+    const day = now.toLocaleDateString('id-ID', { weekday: 'long' }).toLowerCase();
+    const dc = cfg.days[day];
+    if (!dc || !dc.on) return;
+    cfg.lastFired = cfg.lastFired || {};
+    const hh = now.getHours();
+    const mm = now.getMinutes();
+    const [sl, sm] = (dc.sleep || '22:00').split(':').map(Number);
+    const [wk, wm] = (dc.wake || '06:00').split(':').map(Number);
+
+    if (hh === sl && mm === sm && cfg.lastFired[day + ':sleep'] !== tid) {
+      cfg.lastFired[day + ':sleep'] = tid;
+      alarmWrite('alarm', cfg);
+      self.registration.showNotification('Waktunya tidur 🌙', {
+        body: 'Sandarkan kepala — jadwal tidurmu dimulai. Nada pengantar diputar bila aplikasi terbuka.',
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png',
+        tag: 'bq-sleep-alarm',
+        silent: false
+      }).catch(() => {});
+      postToClients({ type: 'bq-lullaby' });
+    }
+    if (hh === wk && mm === wm && cfg.lastFired[day + ':wake'] !== tid) {
+      cfg.lastFired[day + ':wake'] = tid;
+      alarmWrite('alarm', cfg);
+      self.registration.showNotification('Waktunya bangun ☀️', {
+        body: 'Alarm bangun berbunyi — mulai hari dengan langkah ringan.',
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png',
+        tag: 'bq-sleep-alarm',
+        silent: false
+      }).catch(() => {});
+      postToClients({ type: 'bq-wake' });
+    }
+  });
+}
+
+function postToClients(data) {
+  self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+    clients.forEach(c => c.postMessage(data));
   });
 }
 
@@ -117,14 +141,6 @@ self.addEventListener('activate', (event) => {
     )).then(() => self.clients.claim()).then(() => {
       setInterval(checkAlarm, 20000);
     })
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
   );
 });
 
