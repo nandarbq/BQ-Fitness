@@ -269,7 +269,7 @@ const SLEEP_REMINDER = (() => {
     DAY_ORDER.forEach(d => {
       const dc = edit[d];
       const row = document.createElement('div');
-      row.className = 'sched-row';
+      row.className = 'alarm-day-row';
       row.innerHTML = `
         <label class="sched-on">
           <input type="checkbox" class="sched-enable">

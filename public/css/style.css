@@ -54,6 +54,7 @@ h1,h2{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
   max-width:480px;
   margin:0 auto;
   min-height:100vh;
+  min-height:100svh;
   display:flex;
   flex-direction:column;
   position:relative;
@@ -530,8 +531,8 @@ label{display:block; font-size:12.5px; font-weight:600; color:var(--text-muted);
 .alarm-sub b{color:var(--text);}
 
 .schedule-list{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
-.sched-row{display:grid; grid-template-columns:92px 1fr auto; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:12px; background:var(--bg); transition:opacity .2s;}
-.sched-row.off{opacity:.45;}
+.alarm-day-row{display:grid; grid-template-columns:92px 1fr auto; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--border); border-radius:12px; background:var(--bg); transition:opacity .2s;}
+.alarm-day-row.off{opacity:.45;}
 .sched-on{display:flex; align-items:center; gap:7px; font-size:13px; font-weight:800; color:var(--text); cursor:pointer; user-select:none;}
 .sched-on input{width:17px; height:17px; accent-color:var(--red); cursor:pointer;}
 .sched-times{display:flex; flex-direction:column; gap:4px; min-width:0;}
