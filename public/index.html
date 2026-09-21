@@ -577,7 +577,7 @@
 
 <!-- PICK FOOD MODAL -->
 <div id="foodModal" class="modal-overlay">
-  <div class="modal-sheet">
+  <div class="modal-sheet picker-sheet">
     <div class="modal-head">
       <h2>Pilih Makanan</h2>
       <button id="closeFoodModal" class="icon-btn"><svg class="ic"><use href="#i-close"/></svg></button>
@@ -593,20 +593,22 @@
       </span>
     </div>
 
-    <div id="pickerGroups"></div>
+    <div id="pickerBody" class="picker-body">
+      <div id="pickerGroups"></div>
 
-    <button id="pickerManualBtn" class="pill-btn ghost small picker-manual-toggle"><svg class="ic"><use href="#i-plus"/></svg> Catat manual / makan seadanya</button>
-    <div id="pickerManualBox" class="picker-manual" style="display:none">
-      <label>Nama makanan <input id="foodName" class="text-input"></label>
-      <label>Kalori (kkal) <input type="number" id="foodKcal" class="text-input"></label>
-      <div class="row3">
-        <label>Protein (g) <input type="number" id="foodProtein" class="text-input"></label>
-        <label>Karbo (g) <input type="number" id="foodCarb" class="text-input"></label>
-        <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
+      <button id="pickerManualBtn" class="pill-btn ghost small picker-manual-toggle"><svg class="ic"><use href="#i-plus"/></svg> Catat manual / makan seadanya</button>
+      <div id="pickerManualBox" class="picker-manual" style="display:none">
+        <label>Nama makanan <input id="foodName" class="text-input"></label>
+        <label>Kalori (kkal) <input type="number" id="foodKcal" class="text-input"></label>
+        <div class="row3">
+          <label>Protein (g) <input type="number" id="foodProtein" class="text-input"></label>
+          <label>Karbo (g) <input type="number" id="foodCarb" class="text-input"></label>
+          <label>Lemak (g) <input type="number" id="foodFat" class="text-input"></label>
+        </div>
       </div>
-    </div>
 
-    <p id="pickerError" class="auth-error"></p>
+      <p id="pickerError" class="auth-error"></p>
+    </div>
 
     <div class="picker-footer">
       <span id="pickerSum" class="picker-sum">0 kkal · P0 · K0 · L0</span>

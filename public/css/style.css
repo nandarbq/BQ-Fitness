@@ -805,6 +805,10 @@ body.no-scroll{overflow:hidden;}
 #transitionModal .modal-sheet .pill-btn{width:100%;}
 
 /* ---- Halaman Makan: kebutuhan & picker ---- */
+
+/* Modal picker: header & tombol bawah tetap, isi yang digulir */
+.modal-sheet.picker-sheet{display:flex; flex-direction:column; padding-bottom:0; overflow:hidden;}
+.picker-body{flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px;}
 .block{width:100%;}
 .food-cta{margin:14px 0 20px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; padding:14px;}
 .food-cta .ic{width:18px;height:18px;}
@@ -856,7 +860,11 @@ body.no-scroll{overflow:hidden;}
 .picker-manual .row3{gap:8px;}
 .picker-manual .row3 label{gap:4px; font-size:11px;}
 
-.picker-footer{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:16px; position:sticky; bottom:0; background:var(--surface); padding:12px 0 4px; border-top:1px solid var(--border);}
+.picker-footer{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin:14px -22px 0; padding:14px 22px calc(16px + env(safe-area-inset-bottom));
+  background:var(--bg); border-top:1px solid var(--border);
+}
 .picker-sum{font-size:12.5px; font-weight:700; color:var(--text); font-family:var(--font-display);}
 .picker-footer .cta-btn{margin-top:0;}
 #pickerError{margin:8px 0 0;}
