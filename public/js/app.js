@@ -103,15 +103,11 @@ function initProfile() {
   document.getElementById('profSleepTarget').value = p.sleepTarget || 8;
   DOB.init('prof', p.birthdate || '');
   const hint = document.getElementById('profAgeHint');
-  const updateHint = () => {
+  document.addEventListener('bq:dobchange', (e) => {
+    if (e && e.detail && e.detail.prefix !== 'prof') return;
     const age = calcAge(DOB.read('prof'));
     if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
-  };
-  ['profDay', 'profMonth', 'profYear'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', updateHint);
   });
-  updateHint();
 
   const saveBtn = document.getElementById('saveProfileBtn');
   const freshBtn = saveBtn.cloneNode(true);

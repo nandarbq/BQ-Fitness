@@ -91,17 +91,13 @@ const ONBOARDING = (() => {
   }
 
   function bindBirthdate() {
-    const dobInit = DOB.init('ob', (API.getUser() || {}).birthdate);
+    DOB.init('ob', (API.getUser() || {}).birthdate);
     const hint = document.getElementById('obAgeHint');
-    const update = () => {
+    document.addEventListener('bq:dobchange', (e) => {
+      if (e && e.detail && e.detail.prefix !== 'ob') return;
       const age = calcAge(DOB.read('ob'));
       if (hint) hint.textContent = age != null ? `Umur otomatis: ${age} tahun` : '';
-    };
-    ['obDay', 'obMonth', 'obYear'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('change', update);
     });
-    update();
   }
 
   function computePreview() {
