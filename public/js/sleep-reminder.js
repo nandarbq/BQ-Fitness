@@ -347,10 +347,27 @@ const SLEEP_REMINDER = (() => {
   }
 
   async function toggleAlarm(on) {
-    cfg.enabled = on;
-    if (on && 'Notification' in window && Notification.permission === 'default') {
-      try { await Notification.requestPermission(); } catch (e) { /* ignored */ }
+    if (on) {
+      const err = document.getElementById('alarmError');
+      if (err) err.textContent = '';
+      const problems = [];
+      DAY_ORDER.forEach(d => {
+        const dc = edit[d];
+        if (!dc.on) return;
+        validateDay(d, dc).forEach(msg => problems.push(DAY_LABEL[d] + ': ' + msg));
+      });
+      if (problems.length) {
+        const toggle = document.getElementById('alarmToggle');
+        if (toggle) toggle.checked = false;
+        if (err) err.textContent = 'Cek jadwal: ' + problems.slice(0, 2).join(' · ') + (problems.length > 2 ? ' …' : '') + '.';
+        return;
+      }
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (e) { /* ignored */ }
+      }
     }
+    cfg.enabled = on;
+    persist();
     renderStatus();
     if (!on) stopTone();
   }
