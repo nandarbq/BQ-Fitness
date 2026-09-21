@@ -456,7 +456,7 @@ const FOOD = (() => {
   function renderAutoNote() {
     const note = document.getElementById('foodAutoNote');
     if (!note) return;
-    const st = window.WORKOUT && WORKOUT.programStatus();
+    const st = typeof WORKOUT !== 'undefined' ? WORKOUT.programStatus() : null;
     if (st && st.program) {
       const p = st.program;
       const info = PROGRAM_INFO[p.program] || {};

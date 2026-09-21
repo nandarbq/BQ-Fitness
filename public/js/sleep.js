@@ -12,7 +12,7 @@ const SLEEP = (() => {
     });
     highlightQuality();
     document.getElementById('saveSleepBtn').addEventListener('click', save);
-    if (window.SLEEP_REMINDER) SLEEP_REMINDER.init();
+    if (typeof SLEEP_REMINDER !== 'undefined') SLEEP_REMINDER.init();
     await refresh();
   }
 
