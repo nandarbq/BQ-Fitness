@@ -36,6 +36,30 @@ const NAV = (() => {
         e.preventDefault();
       }
     });
+    anchorBottomNav();
+  }
+
+  // Jaga posisi navbar tetap di bawah LAYAR yang terlihat (visual viewport).
+  // Di sebagian WebView/HP, layout viewport menggelembung lebih besar dari layar
+  // ketika isi halaman panjang (mis. halaman Tidur). Tanpa ini, navbar yang
+  // memakai bottom:0 ikut jatuh di bawah layar — tidak terlihat.
+  // bottom = selisih layout vs visual viewport → navbar selalu menempel dasar layar.
+  function anchorBottomNav() {
+    const nav = document.querySelector('.bottomnav');
+    if (!nav || !window.visualViewport) return;
+    const recalc = () => {
+      try {
+        const vv = window.visualViewport;
+        const diff = Math.round(window.innerHeight - vv.height);
+        nav.style.bottom = diff > 0 ? diff + 'px' : '';
+      } catch (e) { /* biarkan CSS default berjalan */ }
+    };
+    window.visualViewport.addEventListener('resize', recalc);
+    window.visualViewport.addEventListener('scroll', recalc);
+    window.addEventListener('resize', recalc);
+    window.addEventListener('orientationchange', () => setTimeout(recalc, 200));
+    document.addEventListener('scroll', recalc, { passive: true });
+    recalc();
   }
 
   function openModal(id) { document.getElementById(id).classList.add('open'); refreshOverlayState(); }
